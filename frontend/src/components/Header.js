@@ -11,13 +11,13 @@ export default function Header() {
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
             <span className="text-2xl font-black text-blue-700">N</span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold leading-tight tracking-tight">
-              NEWS AGGREGATOR
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-black leading-tight tracking-tight">
+              MEDEE.MN
             </h1>
-            <p className="text-[10px] text-blue-200 tracking-widest uppercase">
-              Мэдээний Агрегатор
-            </p>
+            <span className="text-sm font-medium text-blue-100 border-l border-blue-400 pl-4">
+              Дэлхийн мэдээ — Нэг дороос, Монголоор
+            </span>
           </div>
         </Link>
 

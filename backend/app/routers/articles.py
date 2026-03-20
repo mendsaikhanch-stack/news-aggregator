@@ -1,16 +1,22 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.database import get_db
 from app.models.article import Article
 from app.services.scraper import fetch_all_feeds
 from app.services.ai_summary import generate_summary, translate_to_mongolian, classify_article
+from app.auth import get_current_admin
 
 router = APIRouter(prefix="/api/articles", tags=["articles"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/")
+@limiter.limit("60/minute")
 def get_articles(
+    request: Request,
     skip: int = 0,
     limit: int = 20,
     search: str = Query(None),
@@ -48,7 +54,7 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/clear")
-def clear_articles(db: Session = Depends(get_db)):
+def clear_articles(admin: str = Depends(get_current_admin), db: Session = Depends(get_db)):
     """Бүх мэдээг устгах (дахин монголоор татахад ашиглана)."""
     count = db.query(Article).count()
     db.query(Article).delete()
@@ -57,7 +63,7 @@ def clear_articles(db: Session = Depends(get_db)):
 
 
 @router.post("/fetch")
-def fetch_articles(db: Session = Depends(get_db)):
+def fetch_articles(admin: str = Depends(get_current_admin), db: Session = Depends(get_db)):
     """RSS feed-үүдээс шинэ мэдээ татах."""
     raw_articles = fetch_all_feeds()
     new_count = 0

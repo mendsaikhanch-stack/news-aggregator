@@ -26,6 +26,11 @@ export default function ArticleCard({ article }) {
           {article.published_at && (
             <span className="text-xs text-gray-400">
               {new Date(article.published_at).toLocaleDateString("mn-MN")}
+              {" · "}
+              {new Date(article.published_at).toLocaleTimeString("mn-MN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           )}
         </div>

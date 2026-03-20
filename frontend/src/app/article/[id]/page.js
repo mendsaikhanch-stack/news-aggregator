@@ -71,10 +71,9 @@ export default async function ArticlePage({ params }) {
           )}
 
           {article.summary && (
-            <div
-              className="prose max-w-none text-gray-700"
-              dangerouslySetInnerHTML={{ __html: article.summary }}
-            />
+            <p className="prose max-w-none text-gray-700">
+              {article.summary}
+            </p>
           )}
 
           <div className="mt-8 pt-4 border-t">
