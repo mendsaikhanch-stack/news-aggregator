@@ -4,7 +4,7 @@ from sqlalchemy import desc
 from app.database import get_db
 from app.models.article import Article
 from app.services.scraper import fetch_all_feeds
-from app.services.ai_summary import generate_summary, translate_to_mongolian
+from app.services.ai_summary import generate_summary, translate_to_mongolian, classify_article
 
 router = APIRouter(prefix="/api/articles", tags=["articles"])
 
@@ -83,6 +83,7 @@ def fetch_articles(db: Session = Depends(get_db)):
                 summary_mn = summary_raw
 
             ai_summary = generate_summary(summary_raw)
+            category = classify_article(data["title"], summary_raw)
 
             article = Article(
                 title=title_mn,
@@ -91,6 +92,7 @@ def fetch_articles(db: Session = Depends(get_db)):
                 summary=summary_mn,
                 ai_summary=ai_summary,
                 image_url=data.get("image_url"),
+                category=category,
                 lang=lang,
                 region=data.get("region", ""),
                 is_video=1 if data.get("is_video") else 0,

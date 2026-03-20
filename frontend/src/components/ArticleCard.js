@@ -1,9 +1,7 @@
-import Link from "next/link";
-
 export default function ArticleCard({ article }) {
   return (
-    <Link href={`/article/${article.id}`}>
-      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4">
+    <a href={article.url} target="_blank" rel="noopener noreferrer">
+      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer">
         {article.image_url && (
           <img
             src={article.image_url}
@@ -15,6 +13,16 @@ export default function ArticleCard({ article }) {
           <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
             {article.source}
           </span>
+          {article.region && (
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+              {article.region}
+            </span>
+          )}
+          {article.is_video === 1 && (
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">
+              ▶ Видео
+            </span>
+          )}
           {article.published_at && (
             <span className="text-xs text-gray-400">
               {new Date(article.published_at).toLocaleDateString("mn-MN")}
@@ -35,6 +43,6 @@ export default function ArticleCard({ article }) {
           </p>
         )}
       </div>
-    </Link>
+    </a>
   );
 }
