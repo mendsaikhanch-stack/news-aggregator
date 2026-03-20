@@ -63,15 +63,38 @@ def classify_article(title: str, summary: str) -> str:
     return "world"
 
 
+import time
+
+_translator = None
+_last_call = 0
+
+
+def _get_translator():
+    global _translator
+    if _translator is None:
+        _translator = GoogleTranslator(source="en", target="mn")
+    return _translator
+
+
+def _safe_translate(text: str) -> str | None:
+    """Rate-limited орчуулга — хүсэлт бүрийн хооронд завсарлага."""
+    global _last_call
+    elapsed = time.time() - _last_call
+    if elapsed < 0.3:
+        time.sleep(0.3 - elapsed)
+    _last_call = time.time()
+
+    clean = re.sub(r"<[^>]*>", "", text)[:2000]
+    return _get_translator().translate(clean)
+
+
 def translate_to_mongolian(text: str) -> str | None:
     """Google Translate ашиглан текстийг монгол хэл рүү орчуулах."""
     if not text or not text.strip():
         return text
 
     try:
-        clean_text = re.sub(r"<[^>]*>", "", text)[:4000]
-        translated = GoogleTranslator(source="en", target="mn").translate(clean_text)
-        return translated
+        return _safe_translate(text)
     except Exception as e:
         print(f"Translate error: {e}")
         return text
@@ -83,9 +106,7 @@ def generate_summary(article_text: str) -> str | None:
         return None
 
     try:
-        clean = re.sub(r"<[^>]*>", "", article_text)[:2000]
-        translated = GoogleTranslator(source="en", target="mn").translate(clean)
-        return translated
+        return _safe_translate(article_text)
     except Exception as e:
         print(f"Summary error: {e}")
         return None

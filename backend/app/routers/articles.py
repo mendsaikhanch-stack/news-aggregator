@@ -88,7 +88,7 @@ def fetch_articles(admin: str = Depends(get_current_admin), db: Session = Depend
                 title_mn = data["title"]
                 summary_mn = summary_raw
 
-            ai_summary = generate_summary(summary_raw)
+            ai_summary = summary_mn
             category = classify_article(data["title"], summary_raw)
 
             article = Article(
