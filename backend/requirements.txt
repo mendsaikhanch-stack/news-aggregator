@@ -7,5 +7,4 @@ anthropic==0.42.0
 httpx==0.28.1
 beautifulsoup4==4.12.3
 slowapi==0.1.9
-passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.5.0

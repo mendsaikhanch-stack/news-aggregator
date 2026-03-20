@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.article import Article
 from app.auth import verify_password, create_access_token, get_current_admin
+from app.services.ai_summary import get_translator_stats
 from app.config import settings
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -47,4 +48,5 @@ def get_stats(admin: str = Depends(get_current_admin), db: Session = Depends(get
         "by_category": {s: c for s, c in by_category},
         "by_region": {s: c for s, c in by_region},
         "by_language": {s: c for s, c in by_lang},
+        "translator_stats": get_translator_stats(),
     }
