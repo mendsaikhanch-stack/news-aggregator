@@ -12,6 +12,9 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [ads, setAds] = useState([]);
+  const [showAdForm, setShowAdForm] = useState(false);
+  const [adForm, setAdForm] = useState({ title: "", image_url: "", link_url: "", position: "header" });
 
   const login = async () => {
     setMessage("");
@@ -33,11 +36,16 @@ export default function AdminPage() {
     }
   };
 
-  const authFetch = async (url, method = "GET") => {
-    return fetch(url, {
+  const authFetch = async (url, method = "GET", body = null) => {
+    const opts = {
       method,
       headers: { Authorization: `Bearer ${token}` },
-    });
+    };
+    if (body) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(url, opts);
   };
 
   const fetchNews = async () => {
@@ -62,6 +70,45 @@ export default function AdminPage() {
     } catch {
       setMessage("Алдаа гарлаа");
     }
+  };
+
+  const loadAds = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/ads/all`);
+      const data = await res.json();
+      if (res.ok) setAds(data);
+      else setMessage(data.detail);
+    } catch {
+      setMessage("Алдаа гарлаа");
+    }
+  };
+
+  const createAd = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/ads`, "POST", adForm);
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Зар нэмэгдлээ!");
+        setShowAdForm(false);
+        setAdForm({ title: "", image_url: "", link_url: "", position: "header" });
+        loadAds();
+      } else {
+        setMessage(data.detail);
+      }
+    } catch {
+      setMessage("Алдаа гарлаа");
+    }
+  };
+
+  const toggleAd = async (ad) => {
+    await authFetch(`${API_BASE}/api/ads/${ad.id}`, "PUT", { is_active: ad.is_active ? 0 : 1 });
+    loadAds();
+  };
+
+  const deleteAd = async (id) => {
+    if (!confirm("Зар устгах уу?")) return;
+    await authFetch(`${API_BASE}/api/ads/${id}`, "DELETE");
+    loadAds();
   };
 
   const loadStats = async () => {
@@ -157,6 +204,119 @@ export default function AdminPage() {
           >
             Статистик харах
           </button>
+        </div>
+
+        {/* Сурталчилгаа удирдлага */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900">Сурталчилгаа</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={loadAds}
+                className="text-sm bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+              >
+                Жагсаалт
+              </button>
+              <button
+                onClick={() => setShowAdForm(!showAdForm)}
+                className="text-sm bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              >
+                + Шинэ зар
+              </button>
+            </div>
+          </div>
+
+          {/* Зар нэмэх form */}
+          {showAdForm && (
+            <div className="bg-white rounded-xl shadow p-6 mb-4">
+              <h4 className="font-semibold mb-3">Шинэ зар нэмэх</h4>
+              <input
+                type="text"
+                placeholder="Зарын гарчиг"
+                value={adForm.title}
+                onChange={(e) => setAdForm({ ...adForm, title: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 mb-2 outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="text"
+                placeholder="Зургийн URL (заавал биш)"
+                value={adForm.image_url}
+                onChange={(e) => setAdForm({ ...adForm, image_url: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 mb-2 outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="text"
+                placeholder="Холбоос URL"
+                value={adForm.link_url}
+                onChange={(e) => setAdForm({ ...adForm, link_url: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 mb-2 outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <select
+                value={adForm.position}
+                onChange={(e) => setAdForm({ ...adForm, position: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 mb-3 outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="header">Толгой хэсэг (Header)</option>
+                <option value="between_articles">Мэдээний дунд</option>
+                <option value="sidebar">Хажуу самбар (Sidebar)</option>
+                <option value="footer">Хөл хэсэг (Footer)</option>
+              </select>
+              <button
+                onClick={createAd}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+              >
+                Нэмэх
+              </button>
+            </div>
+          )}
+
+          {/* Зарын жагсаалт */}
+          {ads.length > 0 && (
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left">
+                  <tr>
+                    <th className="px-4 py-3">Гарчиг</th>
+                    <th className="px-4 py-3">Байрлал</th>
+                    <th className="px-4 py-3">Төлөв</th>
+                    <th className="px-4 py-3 text-right">Үйлдэл</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {ads.map((ad) => (
+                    <tr key={ad.id}>
+                      <td className="px-4 py-3 font-medium">{ad.title}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                          {ad.position}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => toggleAd(ad)}
+                          className={`text-xs px-2 py-1 rounded ${
+                            ad.is_active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {ad.is_active ? "Идэвхтэй" : "Идэвхгүй"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => deleteAd(ad.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Устгах
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Статистик */}
