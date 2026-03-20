@@ -16,6 +16,7 @@ def get_articles(
     search: str = Query(None),
     category: str = Query(None),
     lang: str = Query(None),
+    region: str = Query(None),
     is_video: int = Query(None),
     db: Session = Depends(get_db),
 ):
@@ -28,6 +29,8 @@ def get_articles(
         query = query.filter(Article.category == category)
     if lang:
         query = query.filter(Article.lang == lang)
+    if region:
+        query = query.filter(Article.region == region)
     if is_video is not None:
         query = query.filter(Article.is_video == is_video)
 
@@ -89,6 +92,7 @@ def fetch_articles(db: Session = Depends(get_db)):
                 ai_summary=ai_summary,
                 image_url=data.get("image_url"),
                 lang=lang,
+                region=data.get("region", ""),
                 is_video=1 if data.get("is_video") else 0,
                 published_at=data.get("published_at"),
             )

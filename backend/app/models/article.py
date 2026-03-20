@@ -15,6 +15,7 @@ class Article(Base):
     image_url = Column(String(1000))
     category = Column(String(100))
     lang = Column(String(10), default="en")
+    region = Column(String(50))
     is_video = Column(Integer, default=0)
     published_at = Column(DateTime)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

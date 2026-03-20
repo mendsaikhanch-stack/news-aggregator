@@ -6,12 +6,28 @@ from app.models.article import Article
 
 # RSS feed-үүд
 RSS_FEEDS = [
-    # Гадаад
-    {"url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", "source": "NY Times", "lang": "en"},
-    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml", "source": "BBC News", "lang": "en"},
-    {"url": "https://www.theguardian.com/world/rss", "source": "The Guardian", "lang": "en"},
-    # Монгол
-    {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn"},
+    # --- Америк ---
+    {"url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", "source": "NY Times", "lang": "en", "region": "america"},
+    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml", "source": "BBC News", "lang": "en", "region": "europe"},
+    {"url": "https://www.theguardian.com/world/rss", "source": "The Guardian", "lang": "en", "region": "europe"},
+
+    # --- Ази ---
+    {"url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml", "source": "CNA", "lang": "en", "region": "asia"},
+    {"url": "https://www.aljazeera.com/xml/rss/all.xml", "source": "Al Jazeera", "lang": "en", "region": "asia"},
+    {"url": "https://www.scmp.com/rss/91/feed", "source": "SCMP", "lang": "en", "region": "asia"},
+    {"url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms", "source": "Times of India", "lang": "en", "region": "asia"},
+    {"url": "https://en.yna.co.kr/RSS/news.xml", "source": "Yonhap", "lang": "en", "region": "asia"},
+
+    # --- Европ ---
+    {"url": "https://rss.dw.com/rdf/rss-en-all", "source": "DW", "lang": "en", "region": "europe"},
+    {"url": "https://www.france24.com/en/rss", "source": "France 24", "lang": "en", "region": "europe"},
+    {"url": "https://www.euronews.com/rss", "source": "Euronews", "lang": "en", "region": "europe"},
+    {"url": "https://feeds.thelocal.com/rss/se", "source": "The Local", "lang": "en", "region": "europe"},
+    {"url": "https://www.rte.ie/news/rss/news-headlines.xml", "source": "RTE", "lang": "en", "region": "europe"},
+    {"url": "https://tass.com/rss/v2.xml", "source": "TASS", "lang": "en", "region": "europe"},
+
+    # --- Монгол ---
+    {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn", "region": "mongolia"},
 ]
 
 # Web scraping хийх Монгол сайтууд
@@ -44,7 +60,7 @@ YOUTUBE_CHANNELS = [
 ]
 
 
-def parse_feed(feed_url: str, source: str) -> list[dict]:
+def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
     """RSS feed-ээс мэдээнүүдийг задлах."""
     feed = feedparser.parse(feed_url)
     articles = []
@@ -71,6 +87,7 @@ def parse_feed(feed_url: str, source: str) -> list[dict]:
             "summary": summary_clean[:500],
             "image_url": image_url,
             "published_at": published,
+            "region": region,
         })
 
     return articles
@@ -117,6 +134,7 @@ def scrape_mongolian_site(site_config: dict) -> list[dict]:
                 "summary": "",
                 "image_url": None,
                 "published_at": datetime.now(),
+                "region": "mongolia",
             })
 
     except Exception as e:
@@ -152,6 +170,7 @@ def fetch_youtube_videos() -> list[dict]:
                     "image_url": thumbnail,
                     "published_at": published,
                     "is_video": True,
+                    "region": "mongolia",
                 })
 
         except Exception as e:
@@ -167,7 +186,7 @@ def fetch_all_feeds() -> list[dict]:
     # RSS feeds
     for feed in RSS_FEEDS:
         try:
-            articles = parse_feed(feed["url"], feed["source"])
+            articles = parse_feed(feed["url"], feed["source"], feed.get("region", ""))
             all_articles.extend(articles)
         except Exception as e:
             print(f"Feed алдаа ({feed['source']}): {e}")
