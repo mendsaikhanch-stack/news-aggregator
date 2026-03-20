@@ -15,6 +15,8 @@ def get_articles(
     limit: int = 20,
     search: str = Query(None),
     category: str = Query(None),
+    lang: str = Query(None),
+    is_video: int = Query(None),
     db: Session = Depends(get_db),
 ):
     """Мэдээнүүдийн жагсаалт авах."""
@@ -24,6 +26,10 @@ def get_articles(
         query = query.filter(Article.title.ilike(f"%{search}%"))
     if category:
         query = query.filter(Article.category == category)
+    if lang:
+        query = query.filter(Article.lang == lang)
+    if is_video is not None:
+        query = query.filter(Article.is_video == is_video)
 
     articles = query.order_by(desc(Article.published_at)).offset(skip).limit(limit).all()
     return articles
@@ -58,10 +64,20 @@ def fetch_articles(db: Session = Depends(get_db)):
         if existing:
             continue
 
-        # Гарчиг, агуулгыг монголоор орчуулах
-        title_mn = translate_to_mongolian(data["title"]) or data["title"]
         summary_raw = data.get("summary", "")
-        summary_mn = translate_to_mongolian(summary_raw) or summary_raw
+
+        # Монгол эх сурвалжийг орчуулахгүй
+        mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle TV", "MNB", "TV9 Mongolia"}
+        is_mn = data["source"] in mn_sources
+        lang = "mn" if is_mn else "en"
+
+        if not is_mn:
+            title_mn = translate_to_mongolian(data["title"]) or data["title"]
+            summary_mn = translate_to_mongolian(summary_raw) or summary_raw
+        else:
+            title_mn = data["title"]
+            summary_mn = summary_raw
+
         ai_summary = generate_summary(summary_raw)
 
         article = Article(
@@ -71,6 +87,8 @@ def fetch_articles(db: Session = Depends(get_db)):
             summary=summary_mn,
             ai_summary=ai_summary,
             image_url=data.get("image_url"),
+            lang=lang,
+            is_video=1 if data.get("is_video") else 0,
             published_at=data.get("published_at"),
         )
         db.add(article)
