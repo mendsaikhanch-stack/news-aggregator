@@ -60,39 +60,43 @@ def fetch_articles(db: Session = Depends(get_db)):
     new_count = 0
 
     for data in raw_articles:
-        existing = db.query(Article).filter(Article.url == data["url"]).first()
-        if existing:
+        try:
+            existing = db.query(Article).filter(Article.url == data["url"]).first()
+            if existing:
+                continue
+
+            summary_raw = data.get("summary", "")
+
+            # Монгол эх сурвалжийг орчуулахгүй
+            mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle News", "MNB", "TV9 Mongolia"}
+            is_mn = data["source"] in mn_sources
+            lang = "mn" if is_mn else "en"
+
+            if not is_mn:
+                title_mn = translate_to_mongolian(data["title"]) or data["title"]
+                summary_mn = translate_to_mongolian(summary_raw) or summary_raw
+            else:
+                title_mn = data["title"]
+                summary_mn = summary_raw
+
+            ai_summary = generate_summary(summary_raw)
+
+            article = Article(
+                title=title_mn,
+                url=data["url"],
+                source=data["source"],
+                summary=summary_mn,
+                ai_summary=ai_summary,
+                image_url=data.get("image_url"),
+                lang=lang,
+                is_video=1 if data.get("is_video") else 0,
+                published_at=data.get("published_at"),
+            )
+            db.add(article)
+            new_count += 1
+        except Exception as e:
+            print(f"Article хадгалах алдаа ({data.get('source', '?')}): {e}")
             continue
-
-        summary_raw = data.get("summary", "")
-
-        # Монгол эх сурвалжийг орчуулахгүй
-        mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle TV", "MNB", "TV9 Mongolia"}
-        is_mn = data["source"] in mn_sources
-        lang = "mn" if is_mn else "en"
-
-        if not is_mn:
-            title_mn = translate_to_mongolian(data["title"]) or data["title"]
-            summary_mn = translate_to_mongolian(summary_raw) or summary_raw
-        else:
-            title_mn = data["title"]
-            summary_mn = summary_raw
-
-        ai_summary = generate_summary(summary_raw)
-
-        article = Article(
-            title=title_mn,
-            url=data["url"],
-            source=data["source"],
-            summary=summary_mn,
-            ai_summary=ai_summary,
-            image_url=data.get("image_url"),
-            lang=lang,
-            is_video=1 if data.get("is_video") else 0,
-            published_at=data.get("published_at"),
-        )
-        db.add(article)
-        new_count += 1
 
     db.commit()
     return {"message": f"{new_count} шинэ мэдээ нэмэгдлээ"}

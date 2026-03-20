@@ -38,9 +38,9 @@ MN_SCRAPE_SITES = [
 
 # YouTube ТВ сувгууд
 YOUTUBE_CHANNELS = [
-    {"channel_id": "UCvsBhO1tVfSRRed8LjJZh4g", "source": "Eagle TV"},
-    {"channel_id": "UC5ICGCMaBXfaskVOPupPSGA", "source": "MNB"},
-    {"channel_id": "UC_lgFMQ0Gxbe0MYOmpBJLRQ", "source": "TV9 Mongolia"},
+    {"channel_id": "UCfy5XACuOkUOqEG4puHPRIw", "source": "Eagle News"},
+    {"channel_id": "UCwtT_d7LZ8BJpiDXHV5RaAw", "source": "MNB"},
+    {"channel_id": "UC6_E6ybGvlfFq8t9Jp-V6lA", "source": "TV9 Mongolia"},
 ]
 
 
