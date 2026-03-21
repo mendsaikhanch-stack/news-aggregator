@@ -191,15 +191,17 @@ function CategorySection({ category, regular, videos, isAI, allVideos }) {
         ))}
       </div>
 
-      {/* Видео мэдээ (тухайн ангилал + рандом бусад видео) */}
+      {/* Видео мэдээ — нэг хөндлөн мөрөнд 3 видео */}
       {mixedVideos.length > 0 && (
         <div className="mt-4 pt-3 border-t border-gray-200">
           <h3 className="text-sm font-bold text-gray-700 mb-2">
             <span className="text-red-500">▶</span> Видео мэдээ
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-            {mixedVideos.map((article) => (
-              <VideoCard key={article.id} article={article} />
+          <div className="flex gap-2.5">
+            {mixedVideos.slice(0, 3).map((article) => (
+              <div key={article.id} className="flex-1 min-w-0">
+                <VideoCard article={article} />
+              </div>
             ))}
           </div>
         </div>
