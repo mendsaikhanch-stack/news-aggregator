@@ -17,6 +17,12 @@ RSS_FEEDS = [
     {"url": "https://www.scmp.com/rss/91/feed", "source": "SCMP", "lang": "en", "region": "asia"},
     {"url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms", "source": "Times of India", "lang": "en", "region": "asia"},
     {"url": "https://en.yna.co.kr/RSS/news.xml", "source": "Yonhap", "lang": "en", "region": "asia"},
+    {"url": "https://japantoday.com/feed", "source": "Japan Today", "lang": "en", "region": "asia"},
+    {"url": "https://www.japantimes.co.jp/feed/", "source": "Japan Times", "lang": "en", "region": "asia"},
+    {"url": "https://www.chinadaily.com.cn/rss/world_rss.xml", "source": "China Daily", "lang": "en", "region": "asia"},
+    {"url": "https://www.globaltimes.cn/rss/outbrain.xml", "source": "Global Times", "lang": "en", "region": "asia"},
+    {"url": "https://www.koreatimes.co.kr/www/rss/world.xml", "source": "Korea Times", "lang": "en", "region": "asia"},
+    {"url": "https://www.bangkokpost.com/rss/data/topstories.xml", "source": "Bangkok Post", "lang": "en", "region": "asia"},
 
     # --- Европ ---
     {"url": "https://rss.dw.com/rdf/rss-en-all", "source": "DW", "lang": "en", "region": "europe"},
@@ -25,6 +31,15 @@ RSS_FEEDS = [
     {"url": "https://feeds.thelocal.com/rss/se", "source": "The Local", "lang": "en", "region": "europe"},
     {"url": "https://www.rte.ie/news/rss/news-headlines.xml", "source": "RTE", "lang": "en", "region": "europe"},
     {"url": "https://tass.com/rss/v2.xml", "source": "TASS", "lang": "en", "region": "europe"},
+    {"url": "https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada", "source": "El Pais", "lang": "en", "region": "europe"},
+    {"url": "https://www.thelocal.es/feed/", "source": "The Local ES", "lang": "en", "region": "europe"},
+    {"url": "https://www.turkishminute.com/feed/", "source": "Turkish Minute", "lang": "en", "region": "europe"},
+
+    # --- Ойрхи Дорнод ---
+    {"url": "https://www.arabnews.com/rss.xml", "source": "Arab News", "lang": "en", "region": "middleeast"},
+
+    # --- Латин Америк ---
+    {"url": "https://www.batimes.com.ar/feed", "source": "Buenos Aires Times", "lang": "en", "region": "america"},
 
     # --- Монгол ---
     {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn", "region": "mongolia"},

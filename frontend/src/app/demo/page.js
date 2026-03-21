@@ -96,7 +96,7 @@ export default async function DemoPage() {
                 sub: "EN → MN",
               },
               {
-                num: stats.total_sources || 0,
+                num: (stats.total_sources || 0) + "+",
                 label: "Эх сурвалж",
                 sub: "дэлхийн",
               },
@@ -488,14 +488,28 @@ export default async function DemoPage() {
             { name: "BBC News", region: "Европ", tier: "top" },
             { name: "The Guardian", region: "Европ", tier: "top" },
             { name: "Al Jazeera", region: "Ази", tier: "top" },
-            { name: "CNA", region: "Ази" },
-            { name: "SCMP", region: "Ази" },
-            { name: "France 24", region: "Европ" },
-            { name: "DW", region: "Европ" },
+            { name: "Japan Today", region: "Япон", tier: "new" },
+            { name: "Japan Times", region: "Япон", tier: "new" },
+            { name: "China Daily", region: "Хятад", tier: "new" },
+            { name: "Global Times", region: "Хятад", tier: "new" },
+            { name: "Korea Times", region: "Өмнөд Солонгос", tier: "new" },
+            { name: "Yonhap", region: "Өмнөд Солонгос" },
+            { name: "SCMP", region: "Хонг Конг" },
+            { name: "CNA", region: "Сингапур" },
+            { name: "Bangkok Post", region: "Тайланд", tier: "new" },
+            { name: "Bangkok Post", region: "Тайланд", tier: "new" },
+            { name: "Times of India", region: "Энэтхэг" },
+            { name: "El Pais", region: "Испани", tier: "new" },
+            { name: "DW", region: "Герман" },
+            { name: "The Local ES", region: "Испани", tier: "new" },
+            { name: "France 24", region: "Франц" },
             { name: "Euronews", region: "Европ" },
-            { name: "Yonhap", region: "Ази" },
-            { name: "TASS", region: "Европ" },
-            { name: "Times of India", region: "Ази" },
+            { name: "Arab News", region: "Ойрхи Дорнод", tier: "new" },
+            { name: "TASS", region: "Орос" },
+            { name: "RTE", region: "Ирланд" },
+            { name: "Turkish Minute", region: "Турк", tier: "new" },
+            { name: "Arab News", region: "Саудын Араб", tier: "new" },
+            { name: "Buenos Aires Times", region: "Аргентин", tier: "new" },
             { name: "iKon.mn", region: "Монгол", tier: "mn" },
             { name: "GoGo.mn", region: "Монгол", tier: "mn" },
             { name: "News.mn", region: "Монгол", tier: "mn" },
@@ -508,11 +522,13 @@ export default async function DemoPage() {
               className={`rounded-xl px-4 py-3 flex items-center justify-between ${
                 s.tier === "top"
                   ? "bg-blue-500/10 border border-blue-500/20"
-                  : s.tier === "mn"
-                    ? "bg-green-500/10 border border-green-500/20"
-                    : s.tier === "tv"
-                      ? "bg-purple-500/10 border border-purple-500/20"
-                      : "bg-white/5 border border-white/10"
+                  : s.tier === "new"
+                    ? "bg-cyan-500/10 border border-cyan-500/20"
+                    : s.tier === "mn"
+                      ? "bg-green-500/10 border border-green-500/20"
+                      : s.tier === "tv"
+                        ? "bg-purple-500/10 border border-purple-500/20"
+                        : "bg-white/5 border border-white/10"
               }`}
             >
               <span className="font-medium text-sm">{s.name}</span>
