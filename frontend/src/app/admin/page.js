@@ -15,6 +15,7 @@ export default function AdminPage() {
   const [ads, setAds] = useState([]);
   const [showAdForm, setShowAdForm] = useState(false);
   const [adForm, setAdForm] = useState({ title: "", image_url: "", link_url: "", position: "header" });
+  const [analytics, setAnalytics] = useState(null);
 
   const login = async () => {
     setMessage("");
@@ -111,6 +112,17 @@ export default function AdminPage() {
     loadAds();
   };
 
+  const loadAnalytics = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/analytics/dashboard`);
+      const data = await res.json();
+      if (res.ok) setAnalytics(data);
+      else setMessage(data.detail);
+    } catch {
+      setMessage("Analytics алдаа");
+    }
+  };
+
   const loadStats = async () => {
     try {
       const res = await authFetch(`${API_BASE}/api/admin/stats`);
@@ -184,7 +196,7 @@ export default function AdminPage() {
         )}
 
         {/* Үйлдлүүд */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <button
             onClick={fetchNews}
             disabled={loading}
@@ -204,7 +216,121 @@ export default function AdminPage() {
           >
             Статистик харах
           </button>
+          <button
+            onClick={loadAnalytics}
+            className="bg-orange-600 text-white py-4 rounded-xl font-semibold hover:bg-orange-700 transition-colors"
+          >
+            Хандалт харах
+          </button>
         </div>
+
+        {/* Хандалтын Analytics */}
+        {analytics && (
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Хандалтын мэдээлэл</h3>
+
+            {/* Өнөөдрийн тоо */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow p-5 text-center">
+                <p className="text-3xl font-black text-blue-700">{analytics.today.views}</p>
+                <p className="text-sm text-gray-500 mt-1">Өнөөдрийн хандалт</p>
+              </div>
+              <div className="bg-white rounded-xl shadow p-5 text-center">
+                <p className="text-3xl font-black text-green-600">{analytics.today.unique_visitors}</p>
+                <p className="text-sm text-gray-500 mt-1">Давтагдашгүй зочин</p>
+              </div>
+              <div className="bg-white rounded-xl shadow p-5 text-center">
+                <p className="text-3xl font-black text-purple-600">{analytics.today.mobile}</p>
+                <p className="text-sm text-gray-500 mt-1">Гар утас</p>
+              </div>
+              <div className="bg-white rounded-xl shadow p-5 text-center">
+                <p className="text-3xl font-black text-gray-700">{analytics.today.desktop}</p>
+                <p className="text-sm text-gray-500 mt-1">Компьютер</p>
+              </div>
+            </div>
+
+            {/* Нийт тоо */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow p-5">
+                <p className="text-sm text-gray-500">Нийт хандалт (бүх цаг)</p>
+                <p className="text-2xl font-bold text-gray-900">{analytics.totals.all_time_views.toLocaleString()}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow p-5">
+                <p className="text-sm text-gray-500">Нийт давтагдашгүй зочин</p>
+                <p className="text-2xl font-bold text-gray-900">{analytics.totals.all_time_unique.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Төхөөрөмжийн хуваарилалт */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-xl shadow p-6">
+                <h4 className="text-lg font-bold mb-3">Төхөөрөмжөөр</h4>
+                {Object.entries(analytics.devices).map(([device, count]) => (
+                  <div key={device} className="flex justify-between py-2 border-b last:border-0">
+                    <span className="text-gray-600">
+                      {device === "mobile" ? "Гар утас" : device === "desktop" ? "Компьютер" : "Таблет"}
+                    </span>
+                    <span className="font-semibold">{count}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-xl shadow p-6">
+                <h4 className="text-lg font-bold mb-3">Шилдэг хуудсууд</h4>
+                {analytics.top_pages.map((p, i) => (
+                  <div key={i} className="flex justify-between py-2 border-b last:border-0">
+                    <span className="text-gray-600 truncate mr-2">{p.path}</span>
+                    <span className="font-semibold">{p.views}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 30 хоногийн график (текст) */}
+            {analytics.daily.length > 0 && (
+              <div className="bg-white rounded-xl shadow p-6">
+                <h4 className="text-lg font-bold mb-3">Сүүлийн 30 хоног</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-left">
+                      <tr>
+                        <th className="px-3 py-2">Огноо</th>
+                        <th className="px-3 py-2">Хандалт</th>
+                        <th className="px-3 py-2">Зочин</th>
+                        <th className="px-3 py-2">Утас</th>
+                        <th className="px-3 py-2">PC</th>
+                        <th className="px-3 py-2">График</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {analytics.daily.map((d) => {
+                        const maxViews = Math.max(...analytics.daily.map((x) => x.views), 1);
+                        const barWidth = Math.round((d.views / maxViews) * 100);
+                        return (
+                          <tr key={d.date}>
+                            <td className="px-3 py-2">{d.date}</td>
+                            <td className="px-3 py-2 font-semibold">{d.views}</td>
+                            <td className="px-3 py-2">{d.unique}</td>
+                            <td className="px-3 py-2">{d.mobile}</td>
+                            <td className="px-3 py-2">{d.desktop}</td>
+                            <td className="px-3 py-2">
+                              <div className="bg-blue-100 rounded-full h-3" style={{ width: "100%" }}>
+                                <div
+                                  className="bg-blue-600 rounded-full h-3"
+                                  style={{ width: `${barWidth}%` }}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Сурталчилгаа удирдлага */}
         <div className="mb-8">
