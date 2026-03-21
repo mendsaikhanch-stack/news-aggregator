@@ -41,6 +41,15 @@ RSS_FEEDS = [
     # --- Латин Америк ---
     {"url": "https://www.batimes.com.ar/feed", "source": "Buenos Aires Times", "lang": "en", "region": "america"},
 
+    # --- Google News (Top Stories) ---
+    {"url": "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en", "source": "Google News", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Tech", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Business", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREp0Y0RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Sports", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Science", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ?hl=en-US&gl=US&ceid=US:en", "source": "Google Health", "lang": "en", "region": "america"},
+    {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Entertainment", "lang": "en", "region": "america"},
+
     # --- Монгол ---
     {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn", "region": "mongolia"},
 ]
@@ -90,6 +99,18 @@ def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
             image_url = entry.media_content[0].get("url")
         elif hasattr(entry, "media_thumbnail") and entry.media_thumbnail:
             image_url = entry.media_thumbnail[0].get("url")
+        # HTML summary дотроос зураг хайх (Google News гэх мэт)
+        if not image_url and summary_raw:
+            img_soup = BeautifulSoup(summary_raw, "html.parser")
+            img_tag = img_soup.find("img")
+            if img_tag and img_tag.get("src"):
+                image_url = img_tag["src"]
+        # enclosure-с зураг авах
+        if not image_url and hasattr(entry, "enclosures") and entry.enclosures:
+            for enc in entry.enclosures:
+                if enc.get("type", "").startswith("image"):
+                    image_url = enc.get("href") or enc.get("url")
+                    break
 
         # HTML tag-ийг цэвэрлэх
         summary_raw = entry.get("summary", "")
