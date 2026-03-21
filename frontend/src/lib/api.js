@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+// Server-side (Node.js) дээр full URL хэрэгтэй, client-side дээр proxy ашиглана
+const isServer = typeof window === "undefined";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isServer ? "http://localhost:8000" : "");
 
 export async function getArticles({ search, category, skip = 0, limit = 20 } = {}) {
   const params = new URLSearchParams();
