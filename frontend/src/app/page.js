@@ -191,17 +191,35 @@ function CategorySection({ category, regular, videos, isAI, allVideos }) {
         ))}
       </div>
 
-      {/* Видео мэдээ — нэг хөндлөн мөрөнд 3 видео */}
+      {/* Видео мэдээ — 1 картын зайд 3 жижиг видео */}
       {mixedVideos.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <h3 className="text-sm font-bold text-gray-700 mb-2">
-            <span className="text-red-500">▶</span> Видео мэдээ
-          </h3>
-          <div className="flex gap-2.5">
+        <div className="mt-3 pt-2 border-t border-gray-200">
+          <p className="text-[10px] font-bold text-gray-500 mb-1.5">
+            <span className="text-red-500">▶</span> Видео
+          </p>
+          <div className="flex gap-1.5 h-20">
             {mixedVideos.slice(0, 3).map((article) => (
-              <div key={article.id} className="flex-1 min-w-0">
-                <VideoCard article={article} />
-              </div>
+              <Link key={article.id} href={`/article/${article.id}`} className="flex-1 min-w-0">
+                <div className="relative rounded overflow-hidden bg-gray-900 h-full group cursor-pointer">
+                  {article.image_url ? (
+                    <img src={article.image_url} alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${CATEGORY_GRADIENTS[article.category] || "from-red-800 to-gray-900"}`} />
+                  )}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 bg-red-600/90 rounded-full flex items-center justify-center">
+                      <svg className="w-2.5 h-2.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 px-1 pb-0.5">
+                    <p className="text-[8px] text-white font-medium line-clamp-1 drop-shadow">{article.title}</p>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
