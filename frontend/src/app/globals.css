@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Stock ticker animation */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker-scroll 40s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Gallery background blur */
+.bg-mongolia-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(241, 245, 249, 0.97) 0%,
+    rgba(219, 234, 254, 0.85) 20%,
+    rgba(241, 245, 249, 0.9) 40%,
+    rgba(254, 243, 199, 0.15) 60%,
+    rgba(241, 245, 249, 0.95) 80%,
+    rgba(241, 245, 249, 1) 100%
+  );
+}
+
+/* Section divider */
+.section-divider {
+  border-top: 3px solid #1d4ed8;
+}
+
+/* Scrollbar hide for ticker */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hero card overlay */
+.hero-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+}
+
+/* Gallery image hover */
+.gallery-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gallery-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
