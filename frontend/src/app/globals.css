@@ -14,6 +14,18 @@
   animation-play-state: paused;
 }
 
+/* MSE ticker - reverse direction */
+@keyframes ticker-scroll-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-ticker-reverse {
+  animation: ticker-scroll-reverse 45s linear infinite;
+}
+.animate-ticker-reverse:hover {
+  animation-play-state: paused;
+}
+
 /* Gallery background blur */
 .bg-mongolia-overlay {
   background: linear-gradient(

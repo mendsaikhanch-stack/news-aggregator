@@ -32,6 +32,27 @@ const COMMODITIES = [
   { symbol: "BTC/USD", base: 84200 },
 ];
 
+// Монголын хөрөнгийн биржийн (MSE) компаниуд
+const MSE_STOCKS = [
+  { symbol: "APU", name: "АПУ", base: 1250 },
+  { symbol: "GOV", name: "Говь", base: 3180 },
+  { symbol: "SUU", name: "Сүү", base: 420 },
+  { symbol: "MNP", name: "Монгол пост", base: 380 },
+  { symbol: "TTL", name: "Тавантолгой", base: 48500 },
+  { symbol: "ADU", name: "Адуунчулуун", base: 12800 },
+  { symbol: "BDL", name: "Бодлогын далай", base: 890 },
+  { symbol: "MIE", name: "МИЕ", base: 265 },
+  { symbol: "EER", name: "Эрдэнэ", base: 1580 },
+  { symbol: "BNG", name: "Баянголмэт", base: 3420 },
+  { symbol: "HRM", name: "Хэрмэн", base: 520 },
+  { symbol: "JTB", name: "Жист Тавилга", base: 185 },
+  { symbol: "MCH", name: "Мах Импекс", base: 710 },
+  { symbol: "MMX", name: "Монголын зэс", base: 2850 },
+  { symbol: "SHV", name: "Шивээ-Овоо", base: 680 },
+  { symbol: "TOP20", name: "ТОП 20 Индекс", base: 28450 },
+  { symbol: "MSE A", name: "MSE-А Индекс", base: 18920 },
+];
+
 function generatePrice(item) {
   const now = new Date();
   const seed = now.getHours() * 60 + now.getMinutes();
@@ -42,32 +63,84 @@ function generatePrice(item) {
   return { ...item, price, change: changePct };
 }
 
-export default function StockTicker() {
-  const [stocks, setStocks] = useState([]);
-
-  useEffect(() => {
-    const all = [...INDICES, ...CURRENCIES, ...COMMODITIES];
-    setStocks(all.map(generatePrice));
-    const interval = setInterval(() => {
-      setStocks(all.map(generatePrice));
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (stocks.length === 0) return null;
-
+function TickerRow({ items, label, labelColor, bgColor, borderColor, direction }) {
   return (
-    <div className="bg-gray-950 text-white overflow-hidden h-8 flex items-center border-b border-gray-800">
-      <div className="animate-ticker flex whitespace-nowrap">
-        {[...stocks, ...stocks].map((s, i) => (
+    <div className={`${bgColor} text-white overflow-hidden h-8 flex items-center ${borderColor}`}>
+      {label && (
+        <div className={`${labelColor} px-3 h-full flex items-center flex-shrink-0 z-10`}>
+          <span className="text-[10px] font-black tracking-wider whitespace-nowrap">{label}</span>
+        </div>
+      )}
+      <div className={`${direction === "right" ? "animate-ticker-reverse" : "animate-ticker"} flex whitespace-nowrap`}>
+        {[...items, ...items].map((s, i) => (
           <span key={i} className="mx-5 text-xs inline-flex items-center gap-1.5">
-            <span className="font-medium text-gray-400">{s.symbol}</span>
-            <span className="text-white font-semibold">{s.price.toLocaleString()}</span>
+            <span className="font-medium text-gray-400">{s.name || s.symbol}</span>
+            {s.name && <span className="text-gray-500 text-[10px]">({s.symbol})</span>}
+            <span className="text-white font-semibold">{s.price.toLocaleString()}₮</span>
             <span className={`font-medium ${s.change >= 0 ? "text-green-400" : "text-red-400"}`}>
               {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
             </span>
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export default function StockTicker() {
+  const [worldStocks, setWorldStocks] = useState([]);
+  const [mseStocks, setMseStocks] = useState([]);
+
+  useEffect(() => {
+    const worldAll = [...INDICES, ...CURRENCIES, ...COMMODITIES];
+    setWorldStocks(worldAll.map(generatePrice));
+    setMseStocks(MSE_STOCKS.map(generatePrice));
+    const interval = setInterval(() => {
+      setWorldStocks(worldAll.map(generatePrice));
+      setMseStocks(MSE_STOCKS.map(generatePrice));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (worldStocks.length === 0) return null;
+
+  return (
+    <div>
+      {/* Олон улсын бирж */}
+      <div className="bg-gray-950 text-white overflow-hidden h-8 flex items-center border-b border-gray-800">
+        <div className="bg-blue-700 px-3 h-full flex items-center flex-shrink-0 z-10">
+          <span className="text-[10px] font-black tracking-wider whitespace-nowrap">ДЭЛХИЙ</span>
+        </div>
+        <div className="animate-ticker flex whitespace-nowrap">
+          {[...worldStocks, ...worldStocks].map((s, i) => (
+            <span key={i} className="mx-5 text-xs inline-flex items-center gap-1.5">
+              <span className="font-medium text-gray-400">{s.symbol}</span>
+              <span className="text-white font-semibold">{s.price.toLocaleString()}</span>
+              <span className={`font-medium ${s.change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Монголын хөрөнгийн бирж */}
+      <div className="bg-gray-900 text-white overflow-hidden h-8 flex items-center border-b border-gray-700">
+        <div className="bg-red-700 px-3 h-full flex items-center flex-shrink-0 z-10">
+          <span className="text-[10px] font-black tracking-wider whitespace-nowrap">MSE 🇲🇳</span>
+        </div>
+        <div className="animate-ticker-reverse flex whitespace-nowrap">
+          {[...mseStocks, ...mseStocks].map((s, i) => (
+            <span key={i} className="mx-5 text-xs inline-flex items-center gap-1.5">
+              <span className="font-medium text-amber-400">{s.name}</span>
+              <span className="text-gray-500 text-[10px]">({s.symbol})</span>
+              <span className="text-white font-semibold">{s.price.toLocaleString()}₮</span>
+              <span className={`font-medium ${s.change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
+              </span>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
