@@ -5,7 +5,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.database import get_db
 from app.models.article import Article
-from app.services.scraper import fetch_all_feeds
+from app.services.scraper import fetch_all_feeds, fetch_article_content
 from app.services.ai_summary import generate_summary, translate_to_mongolian, classify_article
 from app.auth import get_current_admin
 
@@ -91,6 +91,16 @@ def fetch_articles(admin: str = Depends(get_current_admin), db: Session = Depend
             ai_summary = summary_mn
             category = classify_article(data["title"], summary_raw)
 
+            # Бүтэн агуулга татах (видео биш бол)
+            full_content = None
+            translated_content = None
+            if not data.get("is_video"):
+                full_content = fetch_article_content(data["url"])
+                if full_content and not is_mn:
+                    translated_content = translate_to_mongolian(full_content[:3000])
+                elif full_content and is_mn:
+                    translated_content = full_content
+
             article = Article(
                 title=title_mn,
                 url=data["url"],
@@ -102,6 +112,8 @@ def fetch_articles(admin: str = Depends(get_current_admin), db: Session = Depend
                 lang=lang,
                 region=data.get("region", ""),
                 is_video=1 if data.get("is_video") else 0,
+                full_content=full_content,
+                translated_content=translated_content,
                 published_at=data.get("published_at"),
             )
             db.add(article)

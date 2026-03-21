@@ -179,6 +179,53 @@ def fetch_youtube_videos() -> list[dict]:
     return articles
 
 
+def fetch_article_content(url: str) -> str | None:
+    """Мэдээний бүтэн агуулгыг татаж авах."""
+    try:
+        resp = httpx.get(url, timeout=15, follow_redirects=True, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        })
+        if resp.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Шаардлагагүй элементүүдийг устгах
+        for tag in soup.find_all(["script", "style", "nav", "footer", "header", "aside", "iframe", "form", "noscript"]):
+            tag.decompose()
+
+        # Мэдээний агуулгыг олох (нийтлэг selector-ууд)
+        content = None
+        selectors = [
+            "article", "[itemprop='articleBody']", ".article-body",
+            ".post-content", ".entry-content", ".story-body",
+            ".article-content", ".content-body", "main",
+        ]
+        for sel in selectors:
+            el = soup.select_one(sel)
+            if el:
+                # Зөвхөн <p> tag-уудын текстийг авах
+                paragraphs = el.find_all("p")
+                if paragraphs:
+                    content = "\n\n".join(p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20)
+                    break
+
+        if not content:
+            # Fallback: бүх <p> tag-уудыг авах
+            paragraphs = soup.find_all("p")
+            texts = [p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 30]
+            if texts:
+                content = "\n\n".join(texts[:20])
+
+        if content and len(content) > 100:
+            return content[:5000]
+        return None
+
+    except Exception as e:
+        print(f"Content татах алдаа ({url}): {e}")
+        return None
+
+
 def fetch_all_feeds() -> list[dict]:
     """Бүх эх сурвалжаас мэдээ цуглуулах."""
     all_articles = []

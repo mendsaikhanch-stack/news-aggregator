@@ -1,7 +1,9 @@
+import Link from "next/link";
+
 export default function ArticleCard({ article }) {
   return (
-    <a href={article.url} target="_blank" rel="noopener noreferrer">
-      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer">
+    <Link href={`/article/${article.id}`}>
+      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer h-full">
         {article.image_url && (
           <img
             src={article.image_url}
@@ -9,7 +11,7 @@ export default function ArticleCard({ article }) {
             className="w-full h-48 object-cover rounded-md mb-3"
           />
         )}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
             {article.source}
           </span>
@@ -48,6 +50,6 @@ export default function ArticleCard({ article }) {
           </p>
         )}
       </div>
-    </a>
+    </Link>
   );
 }

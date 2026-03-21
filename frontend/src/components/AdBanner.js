@@ -14,16 +14,35 @@ export default function AdBanner({ position }) {
       .catch(() => {});
   }, [position]);
 
-  if (ads.length === 0) return null;
-
-  const ad = ads[Math.floor(Math.random() * ads.length)];
-
   const styles = {
     header: "max-w-6xl mx-auto px-4 py-2",
     sidebar: "w-full",
     between_articles: "col-span-full max-w-4xl mx-auto w-full px-4 py-2",
     footer: "max-w-6xl mx-auto px-4 py-2",
   };
+
+  if (ads.length === 0) {
+    return (
+      <div className={styles[position] || ""}>
+        <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+          <div
+            className={`flex items-center justify-center text-gray-400 ${
+              position === "between_articles" || position === "header"
+                ? "h-20 text-sm"
+                : "h-28 text-base"
+            }`}
+          >
+            <div className="text-center">
+              <span className="block text-lg mb-1">AD</span>
+              <span>Таны зар сурталчилгааны хэсэг</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const ad = ads[Math.floor(Math.random() * ads.length)];
 
   return (
     <div className={styles[position] || ""}>
