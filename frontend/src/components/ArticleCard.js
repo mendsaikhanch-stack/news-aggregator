@@ -49,6 +49,9 @@ export default function ArticleCard({ article }) {
             {article.summary.replace(/<[^>]*>/g, "")}
           </p>
         )}
+        <div className="mt-3 text-xs text-blue-500 font-medium">
+          Дэлгэрэнгүй унших →
+        </div>
       </div>
     </Link>
   );
