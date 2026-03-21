@@ -8,7 +8,7 @@ from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-from app.routers import articles, admin, ads, analytics
+from app.routers import articles, admin, ads, analytics, demo
 from app.services.scraper import fetch_all_feeds, fetch_article_content
 from app.services.ai_summary import translate_to_mongolian, classify_article
 from app.models.article import Article
@@ -125,6 +125,7 @@ app.include_router(articles.router)
 app.include_router(admin.router)
 app.include_router(ads.router)
 app.include_router(analytics.router)
+app.include_router(demo.router)
 
 
 @app.get("/")

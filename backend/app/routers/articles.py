@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func, distinct
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.database import get_db
