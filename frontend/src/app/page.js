@@ -50,7 +50,7 @@ function HeroSection({ articles }) {
         {/* Main hero */}
         <div className="lg:col-span-3">
           <Link href={`/article/${main.id}`}>
-            <div className="relative rounded-xl overflow-hidden bg-gray-900 h-[340px] md:h-[400px] group cursor-pointer">
+            <div className="relative rounded-xl overflow-hidden bg-gray-900 h-56 md:h-72 group cursor-pointer">
               {main.image_url ? (
                 <img
                   src={main.image_url}
@@ -191,13 +191,13 @@ function CategorySection({ category, regular, videos, isAI }) {
         </div>
       )}
 
-      {/* Articles grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* First article large */}
-        {otherArticles[0] && (
-          <div className="md:col-span-2 md:row-span-2">
+      {/* Articles grid - BBC style: нэг том + жижиг мэдээнүүд */}
+      {otherArticles.length >= 3 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Зүүн тал: эхний мэдээ том зурагтай */}
+          <div className="lg:col-span-2">
             <Link href={`/article/${otherArticles[0].id}`}>
-              <div className="relative rounded-xl overflow-hidden bg-gray-900 h-full min-h-[280px] group cursor-pointer">
+              <div className="relative rounded-xl overflow-hidden bg-gray-900 h-64 group cursor-pointer">
                 {otherArticles[0].image_url ? (
                   <img
                     src={otherArticles[0].image_url}
@@ -212,20 +212,59 @@ function CategorySection({ category, regular, videos, isAI }) {
                   <span className="text-[10px] font-semibold text-blue-300 bg-blue-900/50 px-1.5 py-0.5 rounded">
                     {otherArticles[0].source}
                   </span>
-                  <h3 className="text-lg font-bold text-white line-clamp-3 mt-1.5 drop-shadow">
+                  <h3 className="text-lg font-bold text-white line-clamp-2 mt-1.5 drop-shadow">
                     {otherArticles[0].title}
                   </h3>
+                  {otherArticles[0].ai_summary && (
+                    <p className="text-white/70 text-xs mt-1 line-clamp-1 hidden md:block">
+                      {otherArticles[0].ai_summary}
+                    </p>
+                  )}
                 </div>
               </div>
             </Link>
           </div>
-        )}
 
-        {/* Rest of articles */}
-        {otherArticles.slice(1, 7).map((article) => (
-          <ArticleCard key={article.id} article={article} />
-        ))}
-      </div>
+          {/* Баруун тал: жижиг жагсаалт */}
+          <div className="flex flex-col gap-3">
+            {otherArticles.slice(1, 5).map((article) => (
+              <Link key={article.id} href={`/article/${article.id}`}>
+                <div className="flex gap-3 bg-white rounded-lg border hover:shadow-md transition-shadow p-2.5 cursor-pointer">
+                  {article.image_url && (
+                    <img
+                      src={article.image_url}
+                      alt={article.title}
+                      className="w-20 h-16 object-cover rounded flex-shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-blue-600 font-medium">{article.source}</span>
+                    <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">
+                      {article.title}
+                    </h4>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Мэдээ цөөн бол энгийн grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {otherArticles.map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+        </div>
+      )}
+
+      {/* Нэмэлт мэдээнүүд (5-аас хойших) */}
+      {otherArticles.length > 5 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          {otherArticles.slice(5, 9).map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+        </div>
+      )}
 
       {/* Video мэдээ (хэсгийн доод хэсэгт) */}
       {videos.length > 0 && (
