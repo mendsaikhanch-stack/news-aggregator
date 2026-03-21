@@ -104,43 +104,35 @@ export default function StockTicker() {
 
   if (worldStocks.length === 0) return null;
 
-  return (
-    <div>
-      {/* Олон улсын бирж */}
-      <div className="bg-gray-950 text-white overflow-hidden h-8 flex items-center border-b border-gray-800">
-        <div className="bg-blue-700 px-3 h-full flex items-center flex-shrink-0 z-10">
-          <span className="text-[10px] font-black tracking-wider whitespace-nowrap">ДЭЛХИЙ</span>
-        </div>
-        <div className="animate-ticker flex whitespace-nowrap">
-          {[...worldStocks, ...worldStocks].map((s, i) => (
-            <span key={i} className="mx-5 text-xs inline-flex items-center gap-1.5">
-              <span className="font-medium text-gray-400">{s.symbol}</span>
-              <span className="text-white font-semibold">{s.price.toLocaleString()}</span>
-              <span className={`font-medium ${s.change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
-              </span>
-            </span>
-          ))}
-        </div>
-      </div>
+  // Хоёр биржийн мэдээллийг ээлжлэн нэг мөрөнд нийлүүлэх
+  const combined = [];
+  const maxLen = Math.max(worldStocks.length, mseStocks.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i < worldStocks.length) combined.push({ ...worldStocks[i], type: "world" });
+    if (i < mseStocks.length) combined.push({ ...mseStocks[i], type: "mse" });
+  }
 
-      {/* Монголын хөрөнгийн бирж */}
-      <div className="bg-gray-900 text-white overflow-hidden h-8 flex items-center border-b border-gray-700">
-        <div className="bg-red-700 px-3 h-full flex items-center flex-shrink-0 z-10">
-          <span className="text-[10px] font-black tracking-wider whitespace-nowrap">MSE 🇲🇳</span>
-        </div>
-        <div className="animate-ticker-reverse flex whitespace-nowrap">
-          {[...mseStocks, ...mseStocks].map((s, i) => (
-            <span key={i} className="mx-5 text-xs inline-flex items-center gap-1.5">
-              <span className="font-medium text-amber-400">{s.name}</span>
-              <span className="text-gray-500 text-[10px]">({s.symbol})</span>
-              <span className="text-white font-semibold">{s.price.toLocaleString()}₮</span>
-              <span className={`font-medium ${s.change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
-              </span>
+  return (
+    <div className="bg-gray-950 text-white overflow-hidden h-6 flex items-center border-b border-gray-800">
+      <div className="animate-ticker flex whitespace-nowrap">
+        {[...combined, ...combined].map((s, i) => (
+          <span key={i} className="mx-3 text-[10px] inline-flex items-center gap-1">
+            {s.type === "mse" ? (
+              <>
+                <span className="text-amber-400 font-medium">{s.name}</span>
+                <span className="text-white font-semibold">{s.price.toLocaleString()}₮</span>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400 font-medium">{s.symbol}</span>
+                <span className="text-white font-semibold">{s.price.toLocaleString()}</span>
+              </>
+            )}
+            <span className={s.change >= 0 ? "text-green-400" : "text-red-400"}>
+              {s.change >= 0 ? "▲" : "▼"}{Math.abs(s.change)}%
             </span>
-          ))}
-        </div>
+          </span>
+        ))}
       </div>
     </div>
   );
