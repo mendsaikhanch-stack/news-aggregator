@@ -127,13 +127,17 @@ function VideoCard({ article }) {
 function CategorySection({ category, regular, videos, isAI, allVideos }) {
   if (regular.length === 0 && videos.length === 0) return null;
 
-  // Тухайн ангиллын видео + бусад ангиллын видеог рандом холих
-  const otherVideos = (allVideos || []).filter(
-    (v) => !videos.some((cv) => cv.id === v.id)
-  );
-  // Рандом 2 ширхэг бусад видео нэмэх
-  const shuffled = otherVideos.sort(() => 0.5 - Math.random());
-  const mixedVideos = [...videos.slice(0, 2), ...shuffled.slice(0, 1)].slice(0, 3);
+  // Видео мөрийг 3 болгож дүүргэх: эхлээд тухайн ангиллын, дутуу бол бусдаас нэмэх
+  const needed = 3 - videos.length;
+  let mixedVideos = [...videos.slice(0, 3)];
+  if (needed > 0 && allVideos) {
+    const usedIds = new Set(mixedVideos.map((v) => v.id));
+    const extras = allVideos
+      .filter((v) => !usedIds.has(v.id))
+      .sort(() => 0.5 - Math.random())
+      .slice(0, needed);
+    mixedVideos = [...mixedVideos, ...extras];
+  }
 
   let aiArticle = null;
   let otherArticles = regular;
