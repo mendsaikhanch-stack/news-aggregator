@@ -97,7 +97,7 @@ def fetch_articles(admin: str = Depends(get_current_admin), db: Session = Depend
             if not data.get("is_video"):
                 full_content = fetch_article_content(data["url"])
                 if full_content and not is_mn:
-                    translated_content = translate_to_mongolian(full_content[:3000])
+                    translated_content = translate_to_mongolian(full_content)
                 elif full_content and is_mn:
                     translated_content = full_content
 

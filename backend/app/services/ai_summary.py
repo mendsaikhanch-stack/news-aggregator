@@ -25,7 +25,7 @@ def _rate_limit():
     _last_call = time.time()
 
 
-def _clean_text(text: str, max_len: int = 2000) -> str:
+def _clean_text(text: str, max_len: int = 5000) -> str:
     """HTML tag цэвэрлэх."""
     return re.sub(r"<[^>]*>", "", text)[:max_len].strip()
 
@@ -33,11 +33,44 @@ def _clean_text(text: str, max_len: int = 2000) -> str:
 # --- Орчуулагч 1: Google Translate (free) ---
 def _google_translate(text: str) -> str | None:
     _rate_limit()
+    # Google Translate нэг удаад ~5000 тэмдэгт хүлээж авдаг
+    # Урт текстийг хэсэгчлэн орчуулах
+    if len(text) > 4500:
+        chunks = _split_text(text, 4500)
+        translated_parts = []
+        for chunk in chunks:
+            _rate_limit()
+            result = GoogleTranslator(source="en", target="mn").translate(chunk)
+            if result:
+                translated_parts.append(result)
+            else:
+                translated_parts.append(chunk)
+        if translated_parts:
+            _translator_stats["google"] += 1
+            return "\n\n".join(translated_parts)
+        return None
     result = GoogleTranslator(source="en", target="mn").translate(text)
     if result and result != text:
         _translator_stats["google"] += 1
         return result
     return None
+
+
+def _split_text(text: str, max_len: int) -> list[str]:
+    """Текстийг paragraph-аар хэсэгчлэх."""
+    paragraphs = text.split("\n\n")
+    chunks = []
+    current = ""
+    for p in paragraphs:
+        if len(current) + len(p) + 2 > max_len:
+            if current:
+                chunks.append(current.strip())
+            current = p
+        else:
+            current = current + "\n\n" + p if current else p
+    if current:
+        chunks.append(current.strip())
+    return chunks
 
 
 # --- Орчуулагч 2: MyMemory API (free, 5000 үг/өдөр) ---

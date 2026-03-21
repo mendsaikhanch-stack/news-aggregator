@@ -218,7 +218,7 @@ def fetch_article_content(url: str) -> str | None:
                 content = "\n\n".join(texts[:20])
 
         if content and len(content) > 100:
-            return content[:5000]
+            return content[:10000]
         return None
 
     except Exception as e:
