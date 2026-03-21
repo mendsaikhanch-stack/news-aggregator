@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Брэнд */}
           <div>
-            <h3 className="text-xl font-black text-white mb-2">MEDEE.MN</h3>
+            <h3 className="text-xl font-black text-white mb-2">GEREGNEWS.MN</h3>
             <p className="text-sm leading-relaxed">
               Дэлхийн мэдээ — Нэг дороос, Монголоор.
               Ази, Европ, Америкийн шилдэг мэдээллийн сувгуудаас
@@ -53,9 +53,9 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between text-xs">
-          <p>&copy; {year} MEDEE.MN. Бүх эрх хуулиар хамгаалагдсан.</p>
+          <p>&copy; {year} GEREGNEWS.MN. Бүх эрх хуулиар хамгаалагдсан.</p>
           <p className="mt-2 md:mt-0">
-            18 эх сурвалж &middot; 4 бүс нутаг &middot; AI орчуулга
+            27+ эх сурвалж &middot; 5 бүс нутаг &middot; AI орчуулга
           </p>
         </div>
       </div>

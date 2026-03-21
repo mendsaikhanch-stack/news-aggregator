@@ -5,7 +5,7 @@ load_dotenv()
 
 
 class Settings:
-    PROJECT_NAME: str = "News Aggregator API"
+    PROJECT_NAME: str = "GeregNews API"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./news.db")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production-use-random-key")

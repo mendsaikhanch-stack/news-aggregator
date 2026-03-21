@@ -25,7 +25,7 @@ async function getSampleTranslation() {
 }
 
 export const metadata = {
-  title: "MEDEE.MN - Investor Demo | AI-Powered News Aggregator",
+  title: "GEREGNEWS.MN - Investor Demo | AI-Powered News Aggregator",
   description:
     "Дэлхийн мэдээг монгол хэлээр нэг дороос. AI орчуулга, 18+ эх сурвалж.",
 };
@@ -42,12 +42,12 @@ export default async function DemoPage() {
       <div className="max-w-5xl mx-auto px-4 pt-20 pb-16 text-center">
         <div className="inline-flex items-center gap-3 mb-6">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-blue-500/30">
-            M
+            G
           </div>
           <div className="text-left">
-            <h1 className="text-5xl font-black tracking-tight">MEDEE.MN</h1>
+            <h1 className="text-5xl font-black tracking-tight">GEREGNEWS</h1>
             <p className="text-blue-400 text-sm font-medium tracking-widest">
-              AI NEWS PLATFORM
+              AI-POWERED WORLD NEWS
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default async function DemoPage() {
 
           <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-8">
             <h3 className="text-green-400 text-sm font-bold uppercase tracking-widest mb-4">
-              Шийдэл — MEDEE.MN
+              Шийдэл — GEREGNEWS.MN
             </h3>
             <ul className="space-y-4 text-gray-300">
               <li className="flex gap-3">
@@ -382,7 +382,7 @@ export default async function DemoPage() {
       {/* Competitive Advantage */}
       <div className="max-w-4xl mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-10">
-          Яагаад MEDEE.MN?
+          Яагаад GEREGNEWS.MN?
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -392,7 +392,7 @@ export default async function DemoPage() {
                   Боломж
                 </th>
                 <th className="py-3 px-4 text-center text-blue-400 font-bold">
-                  MEDEE.MN
+                  GEREGNEWS.MN
                 </th>
                 <th className="py-3 px-4 text-center text-gray-500 font-medium">
                   iKon.mn
@@ -566,7 +566,7 @@ export default async function DemoPage() {
       {/* Footer */}
       <div className="border-t border-white/10 py-8 text-center">
         <p className="text-gray-500 text-sm">
-          MEDEE.MN — AI-Powered Bilingual News Aggregator
+          GEREGNEWS.MN — AI-Powered Bilingual News Aggregator
         </p>
         <p className="text-gray-600 text-xs mt-2">
           Built with Next.js, FastAPI, Claude AI

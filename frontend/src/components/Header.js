@@ -9,11 +9,11 @@ export default function Header() {
         {/* Logo + Нэр */}
         <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-            <span className="text-2xl font-black text-blue-700">N</span>
+            <span className="text-2xl font-black text-blue-700">G</span>
           </div>
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-black leading-tight tracking-tight">
-              MEDEE.MN
+              GEREGNEWS.MN
             </h1>
             <span className="text-sm font-medium text-blue-100 border-l border-blue-400 pl-4">
               Дэлхийн мэдээ — Нэг дороос, Монголоор

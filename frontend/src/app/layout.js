@@ -3,14 +3,14 @@ import Footer from "../components/Footer";
 import Analytics from "../components/Analytics";
 
 export const metadata = {
-  title: "MEDEE.MN - Дэлхийн мэдээ, Монголоор",
+  title: "GEREGNEWS.MN - Дэлхийн мэдээ, Монголоор",
   description: "Ази, Европ, Америкийн шилдэг мэдээллийн сувгуудаас цаг алдалгүй мэдээлэл хүргэнэ.",
   manifest: "/manifest.json",
   themeColor: "#1d4ed8",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "MEDEE.MN",
+    title: "GEREGNEWS.MN",
   },
   viewport: {
     width: "device-width",

@@ -35,7 +35,7 @@ export default function PreviewPage() {
       <div className="border-b border-gray-800 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold">MEDEE.MN Device Preview</h1>
+            <h1 className="text-2xl font-bold">GEREGNEWS.MN Device Preview</h1>
             <p className="text-gray-400 text-sm">
               Android & iOS загварууд
             </p>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "medee-v1";
+const CACHE_NAME = "geregnews-v1";
 const OFFLINE_URL = "/";
 
 self.addEventListener("install", (event) => {
