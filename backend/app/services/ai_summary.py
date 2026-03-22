@@ -106,7 +106,7 @@ def _lingva_translate(text: str) -> str | None:
     return None
 
 
-# --- Орчуулагч: Claude AI (Anthropic API) - АНХДАГЧ ---
+# --- Орчуулагч: Claude AI (Anthropic API) - АНХДАГЧ (Haiku = хурдан + хямд) ---
 def _claude_translate(text: str) -> str | None:
     if not settings.ANTHROPIC_API_KEY:
         return None
@@ -133,7 +133,7 @@ def _claude_translate(text: str) -> str | None:
 
 
 def _claude_translate_chunk(text: str) -> str | None:
-    """Claude Sonnet ашиглан нэг хэсэг текст орчуулах."""
+    """Claude Haiku ашиглан нэг хэсэг текст орчуулах (хурдан, хямд, чанартай)."""
     if not settings.ANTHROPIC_API_KEY:
         return None
     resp = httpx.post(
@@ -144,21 +144,20 @@ def _claude_translate_chunk(text: str) -> str | None:
             "content-type": "application/json",
         },
         json={
-            "model": "claude-sonnet-4-6-20250514",
-            "max_tokens": 2000,
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 4000,
+            "temperature": 0,
+            "system": (
+                "Чи мэргэжлийн англи-монгол мэдээний орчуулагч. "
+                "Байгалийн, уншихад ойлгомжтой монгол хэлээр орчуул. "
+                "Мэдээний албан ёсны хэв маягтай байх. "
+                "Нэр томьёог зөв орчуул, шаардлагатай бол англи нэрийг хаалтанд бич. "
+                "Зөвхөн орчуулгыг бич, өөр тайлбар бүү нэм."
+            ),
             "messages": [
                 {
                     "role": "user",
-                    "content": (
-                        "Чи мэргэжлийн мэдээний орчуулагч. "
-                        "Дараах англи мэдээний текстийг монгол хэл рүү орчуул.\n\n"
-                        "ЗААВАР:\n"
-                        "- Байгалийн, уншихад ойлгомжтой монгол хэлээр бич\n"
-                        "- Мэдээний албан ёсны хэв маягтай байх\n"
-                        "- Нэр томьёог зөв орчуул, шаардлагатай бол англи нэрийг хаалтанд бич\n"
-                        "- Зөвхөн орчуулгыг бич, өөр тайлбар бүү нэм\n\n"
-                        f"{text}"
-                    ),
+                    "content": text,
                 }
             ],
         },
@@ -176,7 +175,7 @@ def _claude_translate_chunk(text: str) -> str | None:
 
 
 # --- Fallback Chain ---
-# Claude Sonnet анхдагч (чанар хамгийн сайн), Google зөвхөн нөөц
+# Claude Haiku анхдагч (хурдан + хямд + чанартай), Google зөвхөн нөөц
 TRANSLATORS = [
     ("claude", _claude_translate),
     ("google", _google_translate),
