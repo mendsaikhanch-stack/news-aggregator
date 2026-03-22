@@ -124,20 +124,8 @@ function VideoCard({ article }) {
 }
 
 // Нэг ангиллын хэсэг (компакт загвар)
-function CategorySection({ category, regular, videos, isAI, allVideos }) {
-  if (regular.length === 0 && videos.length === 0) return null;
-
-  // Видео мөрийг 3 болгож дүүргэх: эхлээд тухайн ангиллын, дутуу бол бусдаас нэмэх
-  const needed = 3 - videos.length;
-  let mixedVideos = [...videos.slice(0, 3)];
-  if (needed > 0 && allVideos) {
-    const usedIds = new Set(mixedVideos.map((v) => v.id));
-    const extras = allVideos
-      .filter((v) => !usedIds.has(v.id))
-      .sort(() => 0.5 - Math.random())
-      .slice(0, needed);
-    mixedVideos = [...mixedVideos, ...extras];
-  }
+function CategorySection({ category, regular, isAI }) {
+  if (regular.length === 0) return null;
 
   let aiArticle = null;
   let otherArticles = regular;
@@ -191,39 +179,6 @@ function CategorySection({ category, regular, videos, isAI, allVideos }) {
         ))}
       </div>
 
-      {/* Видео мэдээ — 1 картын зайд 3 жижиг видео */}
-      {mixedVideos.length > 0 && (
-        <div className="mt-3 pt-2 border-t border-gray-200">
-          <p className="text-[10px] font-bold text-gray-500 mb-1.5">
-            <span className="text-red-500">▶</span> Видео
-          </p>
-          <div className="flex gap-1.5 h-20">
-            {mixedVideos.slice(0, 3).map((article) => (
-              <Link key={article.id} href={`/article/${article.id}`} className="flex-1 min-w-0">
-                <div className="relative rounded overflow-hidden bg-gray-900 h-full group cursor-pointer">
-                  {article.image_url ? (
-                    <img src={article.image_url} alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${CATEGORY_GRADIENTS[article.category] || "from-red-800 to-gray-900"}`} />
-                  )}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 bg-red-600/90 rounded-full flex items-center justify-center">
-                      <svg className="w-2.5 h-2.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 px-1 pb-0.5">
-                    <p className="text-[8px] text-white font-medium line-clamp-1 drop-shadow">{article.title}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
@@ -271,7 +226,7 @@ export default async function HomePage({ searchParams }) {
 
   // Нүүр хуудас
   const grouped = groupArticles(articles);
-  const heroArticles = articles.filter((a) => a.is_video !== 1).slice(0, 5);
+  const heroArticles = articles.filter((a) => a.is_video !== 1).slice(0, 6);
   const heroIds = new Set(heroArticles.map((a) => a.id));
   Object.values(grouped).forEach((g) => {
     g.regular = g.regular.filter((a) => !heroIds.has(a.id));
@@ -310,10 +265,10 @@ export default async function HomePage({ searchParams }) {
                           <img
                             src={heroArticles[0].image_url}
                             alt={heroArticles[0].title}
-                            className="w-full h-48 object-cover"
+                            className="w-full h-80 object-cover"
                           />
                         ) : (
-                          <div className={`w-full h-48 bg-gradient-to-br ${CATEGORY_GRADIENTS[heroArticles[0].category] || "from-blue-600 to-indigo-800"} flex items-center justify-center`}>
+                          <div className={`w-full h-80 bg-gradient-to-br ${CATEGORY_GRADIENTS[heroArticles[0].category] || "from-blue-600 to-indigo-800"} flex items-center justify-center`}>
                             <span className="text-5xl opacity-70">{CATEGORY_ICONS[heroArticles[0].category] || "📰"}</span>
                           </div>
                         )}
@@ -342,8 +297,8 @@ export default async function HomePage({ searchParams }) {
                 )}
 
                 {/* Хажуугийн мэдээнүүд */}
-                <div className="flex flex-col gap-2.5">
-                  {heroArticles.slice(1, 5).map((article) => (
+                <div className="flex flex-col gap-2">
+                  {heroArticles.slice(1, 6).map((article) => (
                     <SmallArticle key={article.id} article={article} />
                   ))}
                 </div>
@@ -369,9 +324,7 @@ export default async function HomePage({ searchParams }) {
                 <CategorySection
                   category={cat}
                   regular={grouped[cat.key].regular}
-                  videos={grouped[cat.key].videos}
                   isAI={cat.key === "tech"}
-                  allVideos={allVideos}
                 />
                 {i % 3 === 2 && i < CATEGORIES.length - 1 && (
                   <div className="max-w-6xl mx-auto px-4 py-2">
@@ -381,24 +334,56 @@ export default async function HomePage({ searchParams }) {
               </div>
             ))}
 
-            {/* ===== Галерей ===== */}
-            <GallerySection />
-
-            {/* ===== Бүх видео мэдээ ===== */}
+            {/* ===== Бүх видео мэдээ (4 цонх, галерей хэмжээтэй) ===== */}
             {allVideos.length > 0 && (
-              <section className="bg-gray-900 py-8">
+              <section className="py-10 bg-gray-950">
                 <div className="max-w-6xl mx-auto px-4">
-                  <h2 className="text-xl font-black text-white mb-4">
-                    <span className="text-red-500">▶</span> Бүх видео мэдээ
-                  </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {allVideos.slice(0, 8).map((article) => (
-                      <VideoCard key={article.id} article={article} />
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-1 h-8 bg-red-500 rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-black text-white"><span className="text-red-500">▶</span> Бүх видео мэдээ</h2>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[...allVideos].sort(() => 0.5 - Math.random()).slice(0, 4).map((article, i) => (
+                      <Link key={`vp-${i}`} href={`/article/${article.id}`}>
+                        <div className="relative rounded-xl overflow-hidden bg-gray-900 h-40 md:h-44 group cursor-pointer">
+                          {article.image_url ? (
+                            <img
+                              src={article.image_url}
+                              alt={article.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${CATEGORY_GRADIENTS[article.category] || "from-red-800 to-gray-900"} flex items-center justify-center`}>
+                              <span className="text-3xl opacity-60">📹</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-red-600/90 rounded-full flex items-center justify-center group-hover:bg-red-500 transition-colors">
+                              <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" />
+                              </svg>
+                            </div>
+                          </div>
+                          <div className="relative p-3 mt-auto flex flex-col justify-end h-full">
+                            <div className="absolute inset-0" />
+                            <div className="relative mt-auto">
+                              <span className="text-[9px] text-red-300 font-medium">{article.source}</span>
+                              <h4 className="text-white font-bold text-sm line-clamp-2 drop-shadow">{article.title}</h4>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
               </section>
             )}
+
+            {/* ===== Галерей ===== */}
+            <GallerySection />
           </>
         )}
 

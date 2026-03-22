@@ -94,6 +94,9 @@ def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
         if hasattr(entry, "published_parsed") and entry.published_parsed:
             published = datetime(*entry.published_parsed[:6])
 
+        # HTML tag-ийг цэвэрлэх
+        summary_raw = entry.get("summary", "")
+
         image_url = None
         if hasattr(entry, "media_content") and entry.media_content:
             image_url = entry.media_content[0].get("url")
@@ -111,9 +114,6 @@ def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
                 if enc.get("type", "").startswith("image"):
                     image_url = enc.get("href") or enc.get("url")
                     break
-
-        # HTML tag-ийг цэвэрлэх
-        summary_raw = entry.get("summary", "")
         summary_clean = BeautifulSoup(summary_raw, "html.parser").get_text(strip=True)
 
         articles.append({

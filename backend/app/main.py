@@ -17,12 +17,13 @@ from app.models.article import Article
 Base.metadata.create_all(bind=engine)
 
 
-def auto_fetch_articles():
-    """Автоматаар мэдээ татах (scheduler-аас дуудагдана)."""
+def auto_fetch_and_translate():
+    """Мэдээ татаж, гарчиг+хураангуйг шууд орчуулах (1 цаг тутам)."""
     db = SessionLocal()
     try:
         raw_articles = fetch_all_feeds()
         new_count = 0
+        mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle News", "MNB", "TV9 Mongolia"}
 
         for data in raw_articles:
             try:
@@ -31,61 +32,54 @@ def auto_fetch_articles():
                     continue
 
                 summary_raw = data.get("summary", "")
-                mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle News", "MNB", "TV9 Mongolia"}
                 is_mn = data["source"] in mn_sources
                 lang = "mn" if is_mn else "en"
-
-                if not is_mn:
-                    title_mn = translate_to_mongolian(data["title"]) or data["title"]
-                    summary_mn = translate_to_mongolian(summary_raw) or summary_raw
-                else:
-                    title_mn = data["title"]
-                    summary_mn = summary_raw
-
-                ai_summary = summary_mn
                 category = classify_article(data["title"], summary_raw)
 
-                full_content = None
-                translated_content = None
-                if not data.get("is_video"):
-                    full_content = fetch_article_content(data["url"])
-                    if full_content and not is_mn:
-                        translated_content = translate_to_mongolian(full_content)
-                    elif full_content and is_mn:
-                        translated_content = full_content
+                # Монгол бол шууд, англи бол гарчиг+хураангуй орчуулах
+                if is_mn:
+                    title_mn = data["title"]
+                    summary_mn = summary_raw
+                else:
+                    title_mn = translate_to_mongolian(data["title"]) or data["title"]
+                    summary_mn = translate_to_mongolian(summary_raw) or summary_raw if summary_raw else ""
 
                 article = Article(
                     title=title_mn,
                     url=data["url"],
                     source=data["source"],
                     summary=summary_mn,
-                    ai_summary=ai_summary,
+                    ai_summary=summary_mn,
                     image_url=data.get("image_url"),
                     category=category,
                     lang=lang,
                     region=data.get("region", ""),
                     is_video=1 if data.get("is_video") else 0,
-                    full_content=full_content,
-                    translated_content=translated_content,
                     published_at=data.get("published_at"),
                 )
                 db.add(article)
                 new_count += 1
+
+                # 50 мэдээ тутам commit (алдаанаас хамгаалах)
+                if new_count % 50 == 0:
+                    db.commit()
+                    print(f"[Auto] {new_count} articles saved so far...")
+
             except Exception as e:
-                print(f"[Scheduler] Article error ({data.get('source', '?')}): {e}")
+                print(f"[Auto] Article error ({data.get('source', '?')}): {e}")
                 continue
 
         db.commit()
-        print(f"[Scheduler] {new_count} new articles added")
+        print(f"[Auto] {new_count} new articles added + translated")
     except Exception as e:
-        print(f"[Scheduler] Error: {e}")
+        print(f"[Auto] Error: {e}")
     finally:
         db.close()
 
 
-# Scheduler тохиргоо
+# Scheduler тохиргоо — 1 цаг тутам fetch + орчуулга
 scheduler = BackgroundScheduler()
-scheduler.add_job(auto_fetch_articles, "interval", minutes=30, id="auto_fetch",
+scheduler.add_job(auto_fetch_and_translate, "interval", hours=1, id="auto_fetch_translate",
                   max_instances=1, replace_existing=True)
 
 
