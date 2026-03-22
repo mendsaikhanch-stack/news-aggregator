@@ -35,13 +35,13 @@ export default function ArticleCard({ article }) {
           <img
             src={article.image_url}
             alt={article.title}
-            className="w-full h-48 object-cover rounded-md mb-3"
+            className="w-full h-40 md:h-48 object-cover rounded-md mb-3"
           />
         ) : (
           <PlaceholderImage
             category={article.category}
             source={article.source}
-            className="w-full h-48 rounded-md mb-3"
+            className="w-full h-40 md:h-48 rounded-md mb-3"
           />
         )}
         <div className="flex items-center gap-2 mb-2 flex-wrap">

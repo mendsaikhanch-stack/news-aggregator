@@ -34,7 +34,7 @@ export default async function ArticlePage({ params }) {
   return (
     <>
       <Header />
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 py-4 md:py-8">
         <Link
           href="/"
           className="text-blue-600 hover:underline text-sm mb-4 block"
@@ -73,7 +73,7 @@ export default async function ArticlePage({ params }) {
             )}
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
             {article.title}
           </h1>
 

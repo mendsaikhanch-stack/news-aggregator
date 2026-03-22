@@ -77,3 +77,8 @@ img {
 .animate-gallery-fade {
   animation: gallery-fade 4s ease-in-out forwards;
 }
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+}

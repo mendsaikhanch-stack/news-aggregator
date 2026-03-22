@@ -198,7 +198,7 @@ export default function GallerySection() {
                 />
 
                 <div
-                  className={`relative ${expanded === i ? "h-72" : "h-40 md:h-44"}
+                  className={`relative ${expanded === i ? "h-48 md:h-72" : "h-40 md:h-44"}
                     flex flex-col justify-end p-4 transition-all duration-500`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
