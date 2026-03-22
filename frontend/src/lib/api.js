@@ -15,6 +15,17 @@ export async function getArticles({ search, category, skip = 0, limit = 20 } = {
   return res.json();
 }
 
+export async function getVideos({ limit = 20 } = {}) {
+  const params = new URLSearchParams();
+  params.set("is_video", "1");
+  params.set("limit", limit);
+
+  const res = await fetch(`${API_BASE}/api/articles?${params}`, {
+    cache: "no-store",
+  });
+  return res.json();
+}
+
 export async function getArticle(id) {
   const res = await fetch(`${API_BASE}/api/articles/${id}`, {
     cache: "no-store",

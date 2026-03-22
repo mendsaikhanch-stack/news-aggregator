@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent images from overflowing their containers */
+img {
+  max-width: 100%;
+  display: block;
+}
+
 /* Stock ticker animation */
 @keyframes ticker-scroll {
   0% { transform: translateX(0); }

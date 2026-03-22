@@ -8,7 +8,7 @@ import StockTicker from "../components/StockTicker";
 import WeatherWidget from "../components/WeatherWidget";
 import ZurkhaiWidget from "../components/ZurkhaiWidget";
 import GallerySection from "../components/GallerySection";
-import { getArticles } from "../lib/api";
+import { getArticles, getVideos } from "../lib/api";
 
 const CATEGORIES = [
   { key: "world", label: "Дэлхий", icon: "🌍" },
@@ -189,8 +189,12 @@ export default async function HomePage({ searchParams }) {
   const category = params?.category || "";
 
   let articles = [];
+  let videoArticles = [];
   try {
-    articles = await getArticles({ search, category, limit: 100 });
+    [articles, videoArticles] = await Promise.all([
+      getArticles({ search, category, limit: 100 }),
+      getVideos({ limit: 20 }),
+    ]);
   } catch {}
 
   // Хайлт/шүүлт горим
@@ -232,7 +236,9 @@ export default async function HomePage({ searchParams }) {
     g.regular = g.regular.filter((a) => !heroIds.has(a.id));
     g.videos = g.videos.filter((a) => !heroIds.has(a.id));
   });
-  const allVideos = articles.filter((a) => a.is_video === 1);
+  const allVideos = videoArticles.length > 0
+    ? videoArticles
+    : articles.filter((a) => a.is_video === 1);
 
   return (
     <>
@@ -261,17 +267,19 @@ export default async function HomePage({ searchParams }) {
                   <div className="md:col-span-2">
                     <Link href={`/article/${heroArticles[0].id}`}>
                       <div className="bg-white rounded-lg border hover:shadow-lg transition-shadow overflow-hidden cursor-pointer">
-                        {heroArticles[0].image_url ? (
-                          <img
-                            src={heroArticles[0].image_url}
-                            alt={heroArticles[0].title}
-                            className="w-full h-80 object-cover"
-                          />
-                        ) : (
-                          <div className={`w-full h-80 bg-gradient-to-br ${CATEGORY_GRADIENTS[heroArticles[0].category] || "from-blue-600 to-indigo-800"} flex items-center justify-center`}>
-                            <span className="text-5xl opacity-70">{CATEGORY_ICONS[heroArticles[0].category] || "📰"}</span>
-                          </div>
-                        )}
+                        <div className="relative w-full h-80 overflow-hidden">
+                          {heroArticles[0].image_url ? (
+                            <img
+                              src={heroArticles[0].image_url}
+                              alt={heroArticles[0].title}
+                              className="block w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${CATEGORY_GRADIENTS[heroArticles[0].category] || "from-blue-600 to-indigo-800"} flex items-center justify-center`}>
+                              <span className="text-5xl opacity-70">{CATEGORY_ICONS[heroArticles[0].category] || "📰"}</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="p-3">
                           <div className="flex items-center gap-2 mb-1.5">
                             <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">ШИНЭ</span>
