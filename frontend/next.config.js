@@ -19,7 +19,7 @@ const nextConfig = {
         source: "/(.*)",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
@@ -27,7 +27,7 @@ const nextConfig = {
             value:
               "camera=(), microphone=(), geolocation=(), payment=()",
           },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Opener-Policy", value: "unsafe-none" },
           {
             key: "Content-Security-Policy",
             value: [
@@ -37,8 +37,8 @@ const nextConfig = {
               "img-src 'self' data: https: http:",
               "font-src 'self' data:",
               "connect-src 'self' http://localhost:8000 https://wttr.in https://challenges.cloudflare.com",
-              "frame-src https://challenges.cloudflare.com",
-              "frame-ancestors 'none'",
+              "frame-src 'self' https://challenges.cloudflare.com",
+              "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join("; "),
