@@ -27,7 +27,7 @@ export default function CategoryBar() {
             <Link
               key={cat.value}
               href={cat.value ? `/?category=${cat.value}` : "/"}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-1.5 min-h-[44px] flex items-center rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
                 current === cat.value
                   ? "bg-blue-700 text-white"
                   : "text-gray-600 hover:bg-gray-100"

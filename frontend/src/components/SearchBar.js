@@ -17,17 +17,17 @@ export default function SearchBar() {
   }
 
   return (
-    <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-lg">
+    <form onSubmit={handleSearch} className="flex flex-wrap gap-2 w-full max-w-lg">
       <input
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Мэдээ хайх..."
-        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 px-4 py-2.5 md:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button
         type="submit"
-        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        className="px-6 py-2.5 md:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
         Хайх
       </button>

@@ -11,11 +11,11 @@ export default function Header() {
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
             <span className="text-2xl font-black text-blue-700">G</span>
           </div>
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-black leading-tight tracking-tight">
+          <div className="flex items-center gap-2 md:gap-4">
+            <h1 className="text-lg md:text-2xl font-black leading-tight tracking-tight">
               GEREGNEWS.MN
             </h1>
-            <span className="text-sm font-medium text-blue-100 border-l border-blue-400 pl-4">
+            <span className="hidden md:block text-sm font-medium text-blue-100 border-l border-blue-400 pl-4">
               Дэлхийн мэдээ — Нэг дороос, Монголоор
             </span>
           </div>
