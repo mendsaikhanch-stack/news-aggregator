@@ -2,11 +2,14 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from datetime import date, timedelta
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.database import get_db
 from app.models.analytics import PageView, DailyStat
 from app.auth import get_current_admin
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _detect_device(user_agent: str) -> str:
@@ -19,6 +22,7 @@ def _detect_device(user_agent: str) -> str:
 
 
 @router.post("/track")
+@limiter.limit("30/minute")
 def track_pageview(request: Request, db: Session = Depends(get_db)):
     """Хуудасны хандалт бүртгэх (frontend-ээс дуудна)."""
     body = {}

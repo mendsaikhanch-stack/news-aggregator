@@ -353,7 +353,7 @@ export default async function HomePage({ searchParams }) {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[...allVideos].sort(() => 0.5 - Math.random()).slice(0, 4).map((article, i) => (
+                    {[...allVideos].sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 4).map((article, i) => (
                       <Link key={`vp-${i}`} href={`/article/${article.id}`}>
                         <div className="relative rounded-xl overflow-hidden bg-gray-900 h-40 md:h-44 group cursor-pointer">
                           {article.image_url ? (

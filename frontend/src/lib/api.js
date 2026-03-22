@@ -3,39 +3,58 @@ const isServer = typeof window === "undefined";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isServer ? "http://localhost:8000" : "");
 
 export async function getArticles({ search, category, skip = 0, limit = 20 } = {}) {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  if (category) params.set("category", category);
-  params.set("skip", skip);
-  params.set("limit", limit);
+  try {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (category) params.set("category", category);
+    params.set("skip", skip);
+    params.set("limit", limit);
 
-  const res = await fetch(`${API_BASE}/api/articles?${params}`, {
-    cache: "no-store",
-  });
-  return res.json();
+    const res = await fetch(`${API_BASE}/api/articles?${params}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch articles: ${res.status}`);
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 }
 
 export async function getVideos({ limit = 20 } = {}) {
-  const params = new URLSearchParams();
-  params.set("is_video", "1");
-  params.set("limit", limit);
+  try {
+    const params = new URLSearchParams();
+    params.set("is_video", "1");
+    params.set("limit", limit);
 
-  const res = await fetch(`${API_BASE}/api/articles?${params}`, {
-    cache: "no-store",
-  });
-  return res.json();
+    const res = await fetch(`${API_BASE}/api/articles?${params}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch videos: ${res.status}`);
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 }
 
 export async function getArticle(id) {
-  const res = await fetch(`${API_BASE}/api/articles/${id}`, {
-    cache: "no-store",
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/articles/${id}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Failed to fetch article ${id}: ${res.status}`);
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }
 
 export async function fetchNewArticles() {
   const res = await fetch(`${API_BASE}/api/articles/fetch`, {
     method: "POST",
   });
+  if (!res.ok) throw new Error(`Failed to fetch new articles: ${res.status}`);
   return res.json();
 }

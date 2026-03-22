@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.database import get_db
 from app.models.article import Article
 from app.auth import verify_password, create_access_token, get_current_admin
@@ -9,6 +11,7 @@ from app.services.ai_summary import get_translator_stats
 from app.config import settings
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 class LoginRequest(BaseModel):
@@ -22,14 +25,15 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/login", response_model=LoginResponse)
-def admin_login(request: LoginRequest):
+@limiter.limit("5/minute")
+def admin_login(request: Request, login_data: LoginRequest):
     """Админ нэвтрэх."""
-    if request.username != settings.ADMIN_USERNAME:
+    if login_data.username != settings.ADMIN_USERNAME:
         raise HTTPException(status_code=401, detail="Нэвтрэх нэр эсвэл нууц үг буруу")
-    if not verify_password(request.password, settings.ADMIN_PASSWORD_HASH):
+    if not verify_password(login_data.password, settings.ADMIN_PASSWORD_HASH):
         raise HTTPException(status_code=401, detail="Нэвтрэх нэр эсвэл нууц үг буруу")
 
-    token = create_access_token(data={"sub": request.username})
+    token = create_access_token(data={"sub": login_data.username})
     return LoginResponse(access_token=token)
 
 

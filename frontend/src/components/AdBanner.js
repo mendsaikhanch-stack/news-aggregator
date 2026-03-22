@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function AdBanner({ position }) {
   const [ads, setAds] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const randomIndexRef = useRef(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/ads?position=${position}`)
       .then((res) => res.json())
-      .then((data) => setAds(data))
+      .then((data) => {
+        setAds(data);
+        if (data.length > 0) {
+          randomIndexRef.current = Math.floor(Math.random() * data.length);
+        }
+      })
       .catch(() => {});
   }, [position]);
 
@@ -42,7 +53,7 @@ export default function AdBanner({ position }) {
     );
   }
 
-  const ad = ads[Math.floor(Math.random() * ads.length)];
+  const ad = mounted ? ads[randomIndexRef.current] : ads[0];
 
   return (
     <div className={styles[position] || ""}>
@@ -62,6 +73,7 @@ export default function AdBanner({ position }) {
                   ? "w-full h-24 object-cover"
                   : "w-full h-40 object-cover"
               }
+              onError={(e) => { e.target.style.display = "none"; }}
             />
           ) : (
             <div

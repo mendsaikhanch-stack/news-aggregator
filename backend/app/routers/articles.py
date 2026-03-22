@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, distinct
 from slowapi import Limiter
@@ -18,7 +18,7 @@ limiter = Limiter(key_func=get_remote_address)
 def get_articles(
     request: Request,
     skip: int = 0,
-    limit: int = 20,
+    limit: int = Query(20, le=200),
     search: str = Query(None),
     category: str = Query(None),
     lang: str = Query(None),
@@ -49,7 +49,7 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
     """Нэг мэдээний дэлгэрэнгүй авах."""
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
-        return {"error": "Мэдээ олдсонгүй"}
+        raise HTTPException(status_code=404, detail="Мэдээ олдсонгүй")
     return article
 
 
