@@ -60,10 +60,10 @@ function SmallArticle({ article }) {
           <img
             src={article.image_url}
             alt={article.title}
-            className="w-24 h-[68px] object-cover rounded flex-shrink-0"
+            className="w-20 md:w-24 h-14 md:h-[68px] object-cover rounded flex-shrink-0"
           />
         ) : (
-          <div className={`w-24 h-[68px] bg-gradient-to-br ${gradient} rounded flex-shrink-0 flex items-center justify-center`}>
+          <div className={`w-20 md:w-24 h-14 md:h-[68px] bg-gradient-to-br ${gradient} rounded flex-shrink-0 flex items-center justify-center`}>
             <span className="text-2xl opacity-80">{icon}</span>
           </div>
         )}
@@ -267,7 +267,7 @@ export default async function HomePage({ searchParams }) {
                   <div className="md:col-span-2">
                     <Link href={`/article/${heroArticles[0].id}`}>
                       <div className="bg-white rounded-lg border hover:shadow-lg transition-shadow overflow-hidden cursor-pointer">
-                        <div className="relative w-full h-80 overflow-hidden">
+                        <div className="relative w-full h-48 md:h-80 overflow-hidden">
                           {heroArticles[0].image_url ? (
                             <img
                               src={heroArticles[0].image_url}
@@ -355,7 +355,7 @@ export default async function HomePage({ searchParams }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[...allVideos].sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 4).map((article, i) => (
                       <Link key={`vp-${i}`} href={`/article/${article.id}`}>
-                        <div className="relative rounded-xl overflow-hidden bg-gray-900 h-40 md:h-44 group cursor-pointer">
+                        <div className="relative rounded-xl overflow-hidden bg-gray-900 h-32 md:h-40 lg:h-44 group cursor-pointer">
                           {article.image_url ? (
                             <img
                               src={article.image_url}
@@ -369,7 +369,7 @@ export default async function HomePage({ searchParams }) {
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-10 h-10 bg-red-600/90 rounded-full flex items-center justify-center group-hover:bg-red-500 transition-colors">
+                            <div className="w-8 h-8 md:w-10 md:h-10 bg-red-600/90 rounded-full flex items-center justify-center group-hover:bg-red-500 transition-colors">
                               <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" />
                               </svg>
