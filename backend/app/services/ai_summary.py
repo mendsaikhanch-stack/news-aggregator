@@ -106,11 +106,36 @@ def _lingva_translate(text: str) -> str | None:
     return None
 
 
-# --- Орчуулагч 4: Claude AI (Anthropic API) ---
+# --- Орчуулагч: Claude AI (Anthropic API) - АНХДАГЧ ---
 def _claude_translate(text: str) -> str | None:
     if not settings.ANTHROPIC_API_KEY:
         return None
     _rate_limit()
+
+    # Урт текстийг хэсэгчлэн орчуулах
+    max_chunk = 3000
+    if len(text) > max_chunk:
+        chunks = _split_text(text, max_chunk)
+        translated_parts = []
+        for chunk in chunks:
+            _rate_limit()
+            result = _claude_translate_chunk(chunk)
+            if result:
+                translated_parts.append(result)
+            else:
+                translated_parts.append(chunk)
+        if translated_parts:
+            _translator_stats["claude"] += 1
+            return "\n\n".join(translated_parts)
+        return None
+
+    return _claude_translate_chunk(text)
+
+
+def _claude_translate_chunk(text: str) -> str | None:
+    """Claude Sonnet ашиглан нэг хэсэг текст орчуулах."""
+    if not settings.ANTHROPIC_API_KEY:
+        return None
     resp = httpx.post(
         "https://api.anthropic.com/v1/messages",
         headers={
@@ -119,16 +144,25 @@ def _claude_translate(text: str) -> str | None:
             "content-type": "application/json",
         },
         json={
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 1000,
+            "model": "claude-sonnet-4-6-20250514",
+            "max_tokens": 2000,
             "messages": [
                 {
                     "role": "user",
-                    "content": f"Translate this English news text to Mongolian. Return ONLY the Mongolian translation, nothing else:\n\n{text[:1500]}",
+                    "content": (
+                        "Чи мэргэжлийн мэдээний орчуулагч. "
+                        "Дараах англи мэдээний текстийг монгол хэл рүү орчуул.\n\n"
+                        "ЗААВАР:\n"
+                        "- Байгалийн, уншихад ойлгомжтой монгол хэлээр бич\n"
+                        "- Мэдээний албан ёсны хэв маягтай байх\n"
+                        "- Нэр томьёог зөв орчуул, шаардлагатай бол англи нэрийг хаалтанд бич\n"
+                        "- Зөвхөн орчуулгыг бич, өөр тайлбар бүү нэм\n\n"
+                        f"{text}"
+                    ),
                 }
             ],
         },
-        timeout=15,
+        timeout=30,
     )
     if resp.status_code == 200:
         data = resp.json()
@@ -142,10 +176,10 @@ def _claude_translate(text: str) -> str | None:
 
 
 # --- Fallback Chain ---
+# Claude Sonnet анхдагч (чанар хамгийн сайн), Google зөвхөн нөөц
 TRANSLATORS = [
-    ("google", _google_translate),
-    ("mymemory", _mymemory_translate),
     ("claude", _claude_translate),
+    ("google", _google_translate),
 ]
 
 
