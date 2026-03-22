@@ -67,3 +67,13 @@ img {
   transform: scale(1.03);
   box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
+
+/* Gallery image auto-rotate fade */
+@keyframes gallery-fade {
+  0% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.animate-gallery-fade {
+  animation: gallery-fade 4s ease-in-out forwards;
+}
