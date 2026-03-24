@@ -51,32 +51,41 @@ RSS_FEEDS = [
     {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Entertainment", "lang": "en", "region": "america"},
 
     # --- Монгол ---
-    {"url": "https://montsame.mn/rss", "source": "Montsame", "lang": "mn", "region": "mongolia"},
-    {"url": "https://www.montsame.mn/en/rss", "source": "Montsame EN", "lang": "en", "region": "mongolia"},
-    {"url": "https://news.mn/r/", "source": "News.mn RSS", "lang": "mn", "region": "mongolia"},
-    {"url": "https://shuud.mn/rss", "source": "Shuud.mn", "lang": "mn", "region": "mongolia"},
+    # --- Монгол ---
     {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn", "region": "mongolia"},
 ]
 
 # Web scraping хийх Монгол сайтууд
 MN_SCRAPE_SITES = [
     {
-        "url": "https://gogo.mn/r/1",
+        "url": "https://gogo.mn",
         "source": "GoGo.mn",
-        "selectors": {
-            "articles": "div.article-list a, div.news-list a, a.article-link",
-            "title": "h2, h3, .title, span",
-            "link_prefix": "https://gogo.mn",
-        },
+        "link_prefix": "https://gogo.mn",
+        "min_title_len": 15,
     },
     {
         "url": "https://news.mn",
         "source": "News.mn",
-        "selectors": {
-            "articles": "div.news-item a, article a, .post-title a",
-            "title": "h2, h3, .title, span",
-            "link_prefix": "",
-        },
+        "link_prefix": "",
+        "min_title_len": 15,
+    },
+    {
+        "url": "https://montsame.mn",
+        "source": "Montsame",
+        "link_prefix": "https://montsame.mn",
+        "min_title_len": 20,
+    },
+    {
+        "url": "https://www.24tsag.mn",
+        "source": "24tsag.mn",
+        "link_prefix": "https://www.24tsag.mn",
+        "min_title_len": 15,
+    },
+    {
+        "url": "https://shuud.mn",
+        "source": "Shuud.mn",
+        "link_prefix": "https://shuud.mn",
+        "min_title_len": 15,
     },
 ]
 
@@ -134,48 +143,55 @@ def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
 
 
 def scrape_mongolian_site(site_config: dict) -> list[dict]:
-    """Монгол мэдээний сайтаас web scraping хийх."""
+    """Монгол мэдээний сайтаас web scraping хийх (универсал)."""
     articles = []
     try:
         resp = httpx.get(site_config["url"], timeout=15, follow_redirects=True, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         })
         soup = BeautifulSoup(resp.text, "html.parser")
-        selectors = site_config["selectors"]
-
-        # Мэдээний линкүүдийг хайх
-        links = soup.select(selectors["articles"])
+        prefix = site_config.get("link_prefix", "")
+        min_len = site_config.get("min_title_len", 15)
         seen_urls = set()
 
-        for link in links[:15]:
-            href = link.get("href", "")
-            if not href or href == "#" or href in seen_urls:
+        for a_tag in soup.find_all("a", href=True):
+            href = a_tag["href"]
+            title = a_tag.get_text(strip=True)
+
+            # Шүүлт
+            if not title or len(title) < min_len or len(title) > 300:
+                continue
+            if href == "#" or "javascript:" in href:
                 continue
 
             # URL бүрдүүлэх
             if href.startswith("/"):
-                href = selectors["link_prefix"] + href
+                href = prefix + href
             elif not href.startswith("http"):
                 continue
 
+            if href in seen_urls:
+                continue
             seen_urls.add(href)
 
-            # Гарчиг олох
-            title_el = link.select_one(selectors["title"])
-            title = title_el.get_text(strip=True) if title_el else link.get_text(strip=True)
-
-            if not title or len(title) < 5:
-                continue
+            # Зураг олох
+            img = a_tag.find("img")
+            image_url = None
+            if img:
+                image_url = img.get("src") or img.get("data-src")
 
             articles.append({
                 "title": title[:300],
                 "url": href,
                 "source": site_config["source"],
                 "summary": "",
-                "image_url": None,
+                "image_url": image_url,
                 "published_at": datetime.now(),
                 "region": "mongolia",
             })
+
+            if len(articles) >= 15:
+                break
 
     except Exception as e:
         print(f"Scrape алдаа ({site_config['source']}): {e}")
