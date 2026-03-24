@@ -14,6 +14,8 @@ class Settings:
     ADMIN_PASSWORD_HASH: str = os.getenv("ADMIN_PASSWORD_HASH", "")
     VAPID_PUBLIC_KEY: str = os.getenv("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     VAPID_EMAIL: str = os.getenv("VAPID_EMAIL", "admin@geregnews.mn")
     CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:3002", "http://localhost:3001", "https://*.ngrok-free.dev"]
 

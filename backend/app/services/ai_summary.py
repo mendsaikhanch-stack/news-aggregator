@@ -13,7 +13,7 @@ from app.config import settings
 # ============================================================
 
 _last_call = 0
-_translator_stats = {"google": 0, "mymemory": 0, "lingva": 0, "claude": 0, "failed": 0}
+_translator_stats = {"groq": 0, "gemini": 0, "google": 0, "mymemory": 0, "lingva": 0, "claude": 0, "failed": 0}
 
 
 def _rate_limit():
@@ -103,6 +103,138 @@ def _lingva_translate(text: str) -> str | None:
         if translated and translated != text:
             _translator_stats["lingva"] += 1
             return translated
+    return None
+
+
+# --- Орчуулагч: Groq (Llama 3.3 70B, free tier, 30 RPM) ---
+def _groq_translate(text: str) -> str | None:
+    if not settings.GROQ_API_KEY:
+        return None
+    _rate_limit()
+
+    max_chunk = 4000
+    if len(text) > max_chunk:
+        chunks = _split_text(text, max_chunk)
+        translated_parts = []
+        for chunk in chunks:
+            _rate_limit()
+            result = _groq_translate_chunk(chunk)
+            if result:
+                translated_parts.append(result)
+            else:
+                translated_parts.append(chunk)
+        if translated_parts:
+            _translator_stats["groq"] += 1
+            return "\n\n".join(translated_parts)
+        return None
+
+    return _groq_translate_chunk(text)
+
+
+def _groq_translate_chunk(text: str) -> str | None:
+    """Groq Llama 3.3 70B ашиглан текст орчуулах."""
+    if not settings.GROQ_API_KEY:
+        return None
+    resp = httpx.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "Чи мэргэжлийн англи-монгол мэдээний орчуулагч. "
+                        "Байгалийн, уншихад ойлгомжтой монгол хэлээр орчуул. "
+                        "Мэдээний албан ёсны хэв маягтай байх. "
+                        "Нэр томьёог зөв орчуул, шаардлагатай бол англи нэрийг хаалтанд бич. "
+                        "Зөвхөн орчуулгыг бич, өөр тайлбар бүү нэм."
+                    ),
+                },
+                {"role": "user", "content": text},
+            ],
+            "max_tokens": 4000,
+            "temperature": 0.2,
+        },
+        timeout=30,
+    )
+    if resp.status_code == 200:
+        data = resp.json()
+        choices = data.get("choices", [])
+        if choices:
+            translated = choices[0].get("message", {}).get("content", "").strip()
+            if translated:
+                _translator_stats["groq"] += 1
+                return translated
+    else:
+        print(f"[Groq] API error: {resp.status_code}")
+    return None
+
+
+# --- Орчуулагч: Google Gemini (free tier, 15 RPM) ---
+def _gemini_translate(text: str) -> str | None:
+    if not settings.GEMINI_API_KEY:
+        return None
+    _rate_limit()
+
+    max_chunk = 4000
+    if len(text) > max_chunk:
+        chunks = _split_text(text, max_chunk)
+        translated_parts = []
+        for chunk in chunks:
+            _rate_limit()
+            result = _gemini_translate_chunk(chunk)
+            if result:
+                translated_parts.append(result)
+            else:
+                translated_parts.append(chunk)
+        if translated_parts:
+            _translator_stats["gemini"] += 1
+            return "\n\n".join(translated_parts)
+        return None
+
+    return _gemini_translate_chunk(text)
+
+
+def _gemini_translate_chunk(text: str) -> str | None:
+    """Gemini Flash ашиглан текст орчуулах."""
+    if not settings.GEMINI_API_KEY:
+        return None
+    resp = httpx.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}",
+        headers={"content-type": "application/json"},
+        json={
+            "system_instruction": {
+                "parts": [{
+                    "text": (
+                        "Чи мэргэжлийн англи-монгол мэдээний орчуулагч. "
+                        "Байгалийн, уншихад ойлгомжтой монгол хэлээр орчуул. "
+                        "Мэдээний албан ёсны хэв маягтай байх. "
+                        "Нэр томьёог зөв орчуул, шаардлагатай бол англи нэрийг хаалтанд бич. "
+                        "Зөвхөн орчуулгыг бич, өөр тайлбар бүү нэм."
+                    )
+                }]
+            },
+            "contents": [{"parts": [{"text": text}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 4000},
+        },
+        timeout=30,
+    )
+    if resp.status_code == 200:
+        data = resp.json()
+        candidates = data.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if parts:
+                translated = parts[0].get("text", "").strip()
+                if translated:
+                    _translator_stats["gemini"] += 1
+                    return translated
+    else:
+        print(f"[Gemini] API error: {resp.status_code} {resp.text[:200]}")
     return None
 
 
@@ -242,18 +374,100 @@ def _parse_structured_response(text: str) -> dict | None:
 
 def translate_article_structured(title: str, summary: str) -> dict | None:
     """Мэдээг бүтэцтэй prompt-р орчуулж, parse хийсэн dict буцаана.
+    Gemini → Claude fallback chain.
 
     Returns: {"TITLE": ..., "SUMMARY": ..., "KEY_POINTS": ..., "FULL_TEXT": ..., "MONGOLIA_IMPACT": ...}
     """
-    if not settings.ANTHROPIC_API_KEY:
-        return None
-
     news_text = f"Гарчиг: {title}"
     if summary:
         news_text += f"\n\nАгуулга: {summary}"
 
     prompt = _STRUCTURED_PROMPT.format(news_text=news_text)
 
+    # 1. Groq оролдох (үнэгүй, хурдан)
+    if settings.GROQ_API_KEY:
+        result = _groq_structured(prompt)
+        if result:
+            return result
+
+    # 2. Gemini оролдох
+    if settings.GEMINI_API_KEY:
+        result = _gemini_structured(prompt)
+        if result:
+            return result
+
+    # 3. Claude fallback
+    if settings.ANTHROPIC_API_KEY:
+        result = _claude_structured(prompt)
+        if result:
+            return result
+
+    return None
+
+
+def _groq_structured(prompt: str) -> dict | None:
+    """Groq Llama 3.3 70B ашиглан бүтэцтэй орчуулга."""
+    _rate_limit()
+    resp = httpx.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4000,
+            "temperature": 0.3,
+        },
+        timeout=60,
+    )
+    if resp.status_code == 200:
+        data = resp.json()
+        choices = data.get("choices", [])
+        if choices:
+            raw = choices[0].get("message", {}).get("content", "").strip()
+            parsed = _parse_structured_response(raw)
+            if parsed:
+                _translator_stats["groq"] += 1
+                return parsed
+            print(f"[Groq Structured] Parse failed, raw: {raw[:200]}")
+    else:
+        print(f"[Groq Structured] API error: {resp.status_code}")
+    return None
+
+
+def _gemini_structured(prompt: str) -> dict | None:
+    """Gemini Flash ашиглан бүтэцтэй орчуулга."""
+    _rate_limit()
+    resp = httpx.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.GEMINI_API_KEY}",
+        headers={"content-type": "application/json"},
+        json={
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 4000},
+        },
+        timeout=60,
+    )
+    if resp.status_code == 200:
+        data = resp.json()
+        candidates = data.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if parts:
+                raw = parts[0].get("text", "").strip()
+                parsed = _parse_structured_response(raw)
+                if parsed:
+                    _translator_stats["gemini"] += 1
+                    return parsed
+                print(f"[Gemini Structured] Parse failed, raw: {raw[:200]}")
+    else:
+        print(f"[Gemini Structured] API error: {resp.status_code}")
+    return None
+
+
+def _claude_structured(prompt: str) -> dict | None:
+    """Claude Haiku ашиглан бүтэцтэй орчуулга."""
     _rate_limit()
     resp = httpx.post(
         "https://api.anthropic.com/v1/messages",
@@ -266,13 +480,10 @@ def translate_article_structured(title: str, summary: str) -> dict | None:
             "model": "claude-haiku-4-5-20251001",
             "max_tokens": 4000,
             "temperature": 0.3,
-            "messages": [
-                {"role": "user", "content": prompt},
-            ],
+            "messages": [{"role": "user", "content": prompt}],
         },
         timeout=60,
     )
-
     if resp.status_code == 200:
         data = resp.json()
         content = data.get("content", [])
@@ -285,13 +496,14 @@ def translate_article_structured(title: str, summary: str) -> dict | None:
             print(f"[Claude Structured] Parse failed, raw: {raw[:200]}")
     else:
         print(f"[Claude Structured] API error: {resp.status_code}")
-
     return None
 
 
 # --- Fallback Chain ---
-# Claude Haiku анхдагч (хурдан + хямд + чанартай), Google зөвхөн нөөц
+# Groq анхдагч (үнэгүй + хурдан + чанартай), Gemini/Claude нөөц, Google Translate сүүлийн нөөц
 TRANSLATORS = [
+    ("groq", _groq_translate),
+    ("gemini", _gemini_translate),
     ("claude", _claude_translate),
     ("google", _google_translate),
 ]
