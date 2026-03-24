@@ -83,12 +83,10 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
             from app.services.scraper import fetch_article_content
             from app.services.ai_summary import translate_article_structured, translate_to_mongolian
 
-            # 1. Эх сурвалжаас бүтэн агуулга татах
             full_content = fetch_article_content(article.url)
             if full_content:
                 article.full_content = full_content
 
-                # 2. Бүтэцтэй орчуулга оролдох
                 structured = translate_article_structured(article.title, full_content[:3000])
                 if structured:
                     parts = []
@@ -113,7 +111,7 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
                 db.commit()
                 db.refresh(article)
         except Exception as e:
-            print(f"[On-demand] Агуулга татах/орчуулах алдаа: {e}")
+            print(f"[On-demand] Error: {e}")
 
     return article
 
