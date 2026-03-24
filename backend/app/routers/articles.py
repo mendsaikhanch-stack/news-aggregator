@@ -90,10 +90,8 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
                 structured = translate_article_structured(article.title, full_content[:3000])
                 if structured:
                     parts = []
-                    if structured.get("FUN_EXPLAIN"):
-                        parts.append(structured["FUN_EXPLAIN"])
                     if structured.get("FULL_TEXT"):
-                        parts.append("\n\n" + structured["FULL_TEXT"])
+                        parts.append(structured["FULL_TEXT"])
                     if structured.get("KEY_POINTS"):
                         parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
                     article.translated_content = "\n".join(parts) if parts else None

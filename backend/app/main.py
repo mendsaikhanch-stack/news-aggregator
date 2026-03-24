@@ -58,12 +58,10 @@ def auto_fetch_and_translate():
                         if structured:
                             title_mn = structured.get("TITLE", data["title"])
                             summary_mn = structured.get("SUMMARY", "")
-                            # FUN_EXPLAIN + FULL_TEXT + KEY_POINTS-г нэгтгэж ai_summary-д хадгалах
+                            # FULL_TEXT + KEY_POINTS-г нэгтгэж ai_summary-д хадгалах
                             parts = []
-                            if structured.get("FUN_EXPLAIN"):
-                                parts.append(structured["FUN_EXPLAIN"])
                             if structured.get("FULL_TEXT"):
-                                parts.append("\n\n" + structured["FULL_TEXT"])
+                                parts.append(structured["FULL_TEXT"])
                             if structured.get("KEY_POINTS"):
                                 parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
                             ai_summary_mn = "\n".join(parts) if parts else summary_mn
@@ -155,10 +153,8 @@ def batch_translate_articles():
                     structured = translate_article_structured(article.title, content[:3000])
                     if structured:
                         parts = []
-                        if structured.get("FUN_EXPLAIN"):
-                            parts.append(structured["FUN_EXPLAIN"])
                         if structured.get("FULL_TEXT"):
-                            parts.append("\n\n" + structured["FULL_TEXT"])
+                            parts.append(structured["FULL_TEXT"])
                         if structured.get("KEY_POINTS"):
                             parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
                         article.translated_content = "\n".join(parts) if parts else content[:3000]
