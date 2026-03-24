@@ -58,14 +58,14 @@ def auto_fetch_and_translate():
                         if structured:
                             title_mn = structured.get("TITLE", data["title"])
                             summary_mn = structured.get("SUMMARY", "")
-                            # KEY_POINTS + FULL_TEXT + MONGOLIA_IMPACT-г нэгтгэж ai_summary-д хадгалах
+                            # FUN_EXPLAIN + FULL_TEXT + KEY_POINTS-г нэгтгэж ai_summary-д хадгалах
                             parts = []
+                            if structured.get("FUN_EXPLAIN"):
+                                parts.append(structured["FUN_EXPLAIN"])
                             if structured.get("FULL_TEXT"):
-                                parts.append(structured["FULL_TEXT"])
+                                parts.append("\n\n" + structured["FULL_TEXT"])
                             if structured.get("KEY_POINTS"):
                                 parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
-                            if structured.get("MONGOLIA_IMPACT"):
-                                parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
                             ai_summary_mn = "\n".join(parts) if parts else summary_mn
                         else:
                             # Fallback: хуучин аргаар орчуулах
@@ -155,12 +155,12 @@ def batch_translate_articles():
                     structured = translate_article_structured(article.title, content[:3000])
                     if structured:
                         parts = []
+                        if structured.get("FUN_EXPLAIN"):
+                            parts.append(structured["FUN_EXPLAIN"])
                         if structured.get("FULL_TEXT"):
-                            parts.append(structured["FULL_TEXT"])
+                            parts.append("\n\n" + structured["FULL_TEXT"])
                         if structured.get("KEY_POINTS"):
                             parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
-                        if structured.get("MONGOLIA_IMPACT"):
-                            parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
                         article.translated_content = "\n".join(parts) if parts else content[:3000]
                         article.title = structured.get("TITLE", article.title)
                         article.ai_summary = structured.get("SUMMARY", article.ai_summary)

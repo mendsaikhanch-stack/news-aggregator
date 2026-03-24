@@ -32,21 +32,13 @@ export default async function ArticlePage({ params }) {
   const rawContent = article.translated_content || article.full_content || "";
   let mainText = rawContent;
   let keyPoints = "";
-  let mongoliaImpact = "";
 
   // Бүтэцтэй хариу байвал задлах
-  const keyPointsMatch = rawContent.match(/\n\nГол санаанууд:\n([\s\S]*?)(?=\n\nМонголд үзүүлэх нөлөө:|\n*$)/);
-  const impactMatch = rawContent.match(/\n\nМонголд үзүүлэх нөлөө:\n([\s\S]*?)$/);
+  const keyPointsMatch = rawContent.match(/\n\nГол санаанууд:\n([\s\S]*?)$/);
 
   if (keyPointsMatch) {
     keyPoints = keyPointsMatch[1].trim();
     mainText = rawContent.substring(0, rawContent.indexOf("\n\nГол санаанууд:")).trim();
-  }
-  if (impactMatch) {
-    mongoliaImpact = impactMatch[1].trim();
-    if (!keyPointsMatch) {
-      mainText = rawContent.substring(0, rawContent.indexOf("\n\nМонголд үзүүлэх нөлөө:")).trim();
-    }
   }
 
   const contentParagraphs = mainText
@@ -158,18 +150,6 @@ export default async function ArticlePage({ params }) {
                 </p>
               </div>
             )
-          )}
-
-          {/* Монголд үзүүлэх нөлөө */}
-          {mongoliaImpact && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-6">
-              <h3 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
-                Монголд үзүүлэх нөлөө
-              </h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
-                {mongoliaImpact}
-              </p>
-            </div>
           )}
 
           {/* Доод хэсэг */}
