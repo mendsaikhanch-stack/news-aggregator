@@ -174,6 +174,121 @@ def _claude_translate_chunk(text: str) -> str | None:
     return None
 
 
+# ============================================================
+# Бүтэцтэй орчуулга (structured translation)
+# ============================================================
+
+_STRUCTURED_PROMPT = """Та олон улсын мэдээг Монгол хэл дээр ойлгомжтой, байгалийн хэлээр тайлбарлан бичдэг туршлагатай редактор юм.
+
+Дараах мэдээг боловсруул:
+
+{news_text}
+
+ШААРДЛАГА:
+1. Мэдээг Монгол хэл рүү утгаар нь ойлгомжтой орчуул
+2. Англи хэлний бүтцийг шууд хуулж болохгүй
+3. Хэт урт өгүүлбэрийг задла
+4. Модон, шууд орчуулсан хэллэгийг зас
+5. Монгол хүний уншихад энгийн, байгалийн хэл ашигла
+6. Давхардал, нуршуу хэсгийг багасга
+
+ГАРАЛТЫГ ЗААВАЛ ДАРААХ ФОРМАТААР ӨГ:
+
+TITLE:
+(1 өгүүлбэр, сонирхол татахуйц гарчиг)
+
+SUMMARY:
+(2 өгүүлбэр, товч утга)
+
+KEY_POINTS:
+- (3–5 гол санаа)
+
+FULL_TEXT:
+(бүтэн сайжруулсан орчуулга)
+
+MONGOLIA_IMPACT:
+(Монголд ямар нөлөөтэй байж болохыг 1-2 өгүүлбэрээр тайлбарла)"""
+
+
+def _parse_structured_response(text: str) -> dict | None:
+    """Claude-ийн бүтэцтэй хариуг parse хийх."""
+    sections = {}
+    current_key = None
+    current_lines = []
+
+    for line in text.split("\n"):
+        stripped = line.strip()
+        # Шинэ section эхлэв үү?
+        for key in ("TITLE:", "SUMMARY:", "KEY_POINTS:", "FULL_TEXT:", "MONGOLIA_IMPACT:"):
+            if stripped == key or stripped.startswith(key):
+                if current_key:
+                    sections[current_key] = "\n".join(current_lines).strip()
+                current_key = key.rstrip(":")
+                # TITLE: Гарчиг гэж нэг мөрөнд бичсэн бол
+                rest = stripped[len(key):].strip()
+                current_lines = [rest] if rest else []
+                break
+        else:
+            if current_key:
+                current_lines.append(line)
+
+    if current_key:
+        sections[current_key] = "\n".join(current_lines).strip()
+
+    if "TITLE" in sections and "SUMMARY" in sections:
+        return sections
+    return None
+
+
+def translate_article_structured(title: str, summary: str) -> dict | None:
+    """Мэдээг бүтэцтэй prompt-р орчуулж, parse хийсэн dict буцаана.
+
+    Returns: {"TITLE": ..., "SUMMARY": ..., "KEY_POINTS": ..., "FULL_TEXT": ..., "MONGOLIA_IMPACT": ...}
+    """
+    if not settings.ANTHROPIC_API_KEY:
+        return None
+
+    news_text = f"Гарчиг: {title}"
+    if summary:
+        news_text += f"\n\nАгуулга: {summary}"
+
+    prompt = _STRUCTURED_PROMPT.format(news_text=news_text)
+
+    _rate_limit()
+    resp = httpx.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": settings.ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        json={
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 4000,
+            "temperature": 0.3,
+            "messages": [
+                {"role": "user", "content": prompt},
+            ],
+        },
+        timeout=60,
+    )
+
+    if resp.status_code == 200:
+        data = resp.json()
+        content = data.get("content", [])
+        if content:
+            raw = content[0].get("text", "").strip()
+            parsed = _parse_structured_response(raw)
+            if parsed:
+                _translator_stats["claude"] += 1
+                return parsed
+            print(f"[Claude Structured] Parse failed, raw: {raw[:200]}")
+    else:
+        print(f"[Claude Structured] API error: {resp.status_code}")
+
+    return None
+
+
 # --- Fallback Chain ---
 # Claude Haiku анхдагч (хурдан + хямд + чанартай), Google зөвхөн нөөц
 TRANSLATORS = [

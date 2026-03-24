@@ -12,7 +12,7 @@ from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.routers import articles, admin, ads, analytics, demo, users, bookmarks, push, rss
 from app.services.scraper import fetch_all_feeds, fetch_article_content
-from app.services.ai_summary import translate_to_mongolian, classify_article
+from app.services.ai_summary import translate_to_mongolian, classify_article, translate_article_structured
 from app.models.article import Article
 from app.models.user import User
 from app.models.bookmark import Bookmark
@@ -47,20 +47,38 @@ def auto_fetch_and_translate():
                     lang = "mn" if is_mn else "en"
                     category = classify_article(data["title"], summary_raw)
 
-                    # Монгол бол шууд, англи бол гарчиг+хураангуй орчуулах
+                    # Монгол бол шууд, англи бол бүтэцтэй prompt-р орчуулах
                     if is_mn:
                         title_mn = data["title"]
                         summary_mn = summary_raw
+                        ai_summary_mn = summary_raw
                     else:
-                        title_mn = translate_to_mongolian(data["title"]) or data["title"]
-                        summary_mn = translate_to_mongolian(summary_raw) or summary_raw if summary_raw else ""
+                        # Бүтэцтэй орчуулга оролдох
+                        structured = translate_article_structured(data["title"], summary_raw)
+                        if structured:
+                            title_mn = structured.get("TITLE", data["title"])
+                            summary_mn = structured.get("SUMMARY", "")
+                            # KEY_POINTS + FULL_TEXT + MONGOLIA_IMPACT-г нэгтгэж ai_summary-д хадгалах
+                            parts = []
+                            if structured.get("FULL_TEXT"):
+                                parts.append(structured["FULL_TEXT"])
+                            if structured.get("KEY_POINTS"):
+                                parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
+                            if structured.get("MONGOLIA_IMPACT"):
+                                parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
+                            ai_summary_mn = "\n".join(parts) if parts else summary_mn
+                        else:
+                            # Fallback: хуучин аргаар орчуулах
+                            title_mn = translate_to_mongolian(data["title"]) or data["title"]
+                            summary_mn = translate_to_mongolian(summary_raw) or summary_raw if summary_raw else ""
+                            ai_summary_mn = summary_mn
 
                     article = Article(
                         title=title_mn,
                         url=data["url"],
                         source=data["source"],
                         summary=summary_mn,
-                        ai_summary=summary_mn,
+                        ai_summary=ai_summary_mn,
                         image_url=data.get("image_url"),
                         category=category,
                         lang=lang,
