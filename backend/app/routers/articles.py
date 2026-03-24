@@ -72,10 +72,49 @@ def get_articles(
 
 @router.get("/{article_id}")
 def get_article(article_id: int, db: Session = Depends(get_db)):
-    """Нэг мэдээний дэлгэрэнгүй авах."""
+    """Нэг мэдээний дэлгэрэнгүй авах. Агуулга байхгүй бол on-demand татаж орчуулна."""
     article = db.query(Article).filter(Article.id == article_id).first()
     if not article:
         raise HTTPException(status_code=404, detail="Мэдээ олдсонгүй")
+
+    # Агуулга байхгүй бол on-demand татаж орчуулах
+    if not article.translated_content and article.lang != "mn":
+        try:
+            from app.services.scraper import fetch_article_content
+            from app.services.ai_summary import translate_article_structured, translate_to_mongolian
+
+            # 1. Эх сурвалжаас бүтэн агуулга татах
+            full_content = fetch_article_content(article.url)
+            if full_content:
+                article.full_content = full_content
+
+                # 2. Бүтэцтэй орчуулга оролдох
+                structured = translate_article_structured(article.title, full_content[:3000])
+                if structured:
+                    parts = []
+                    if structured.get("FULL_TEXT"):
+                        parts.append(structured["FULL_TEXT"])
+                    if structured.get("KEY_POINTS"):
+                        parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
+                    if structured.get("MONGOLIA_IMPACT"):
+                        parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
+                    article.translated_content = "\n".join(parts) if parts else None
+                    # Гарчиг, хураангуйг шинэчлэх
+                    if structured.get("TITLE"):
+                        article.title = structured["TITLE"]
+                    if structured.get("SUMMARY"):
+                        article.ai_summary = structured["SUMMARY"]
+                else:
+                    # Fallback: энгийн орчуулга
+                    translated = translate_to_mongolian(full_content[:3000])
+                    if translated:
+                        article.translated_content = translated
+
+                db.commit()
+                db.refresh(article)
+        except Exception as e:
+            print(f"[On-demand] Агуулга татах/орчуулах алдаа: {e}")
+
     return article
 
 
