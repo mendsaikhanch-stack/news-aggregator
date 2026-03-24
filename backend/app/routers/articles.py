@@ -94,6 +94,8 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
                         parts.append(structured["FULL_TEXT"])
                     if structured.get("KEY_POINTS"):
                         parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
+                    if structured.get("MONGOLIA_IMPACT"):
+                        parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
                     article.translated_content = "\n".join(parts) if parts else None
                     # Гарчиг, хураангуйг шинэчлэх
                     if structured.get("TITLE"):
