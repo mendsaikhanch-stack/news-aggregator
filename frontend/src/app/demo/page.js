@@ -268,7 +268,7 @@ export default async function DemoPage() {
             {
               step: "02",
               title: "AI Орчуулга",
-              desc: "Google Translate → MyMemory → Claude AI fallback chain ашиглан монголоор орчуулна",
+              desc: "Groq → Gemini → Claude AI → Google Translate fallback chain ашиглан монголоор орчуулна",
               color: "purple",
             },
             {
