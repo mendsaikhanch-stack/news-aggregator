@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BookmarkButton from "./BookmarkButton";
 
 const CATEGORY_GRADIENTS = {
   world: "from-blue-600 to-indigo-800",
@@ -30,7 +31,12 @@ function PlaceholderImage({ category, source, className }) {
 export default function ArticleCard({ article }) {
   return (
     <Link href={`/article/${article.id}`}>
-      <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer h-full">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 hover:shadow-md transition-shadow p-4 cursor-pointer h-full relative group">
+        {/* Bookmark button */}
+        <div className="absolute top-6 right-6 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <BookmarkButton articleId={article.id} size="sm" />
+        </div>
+
         {article.image_url ? (
           <img
             src={article.image_url}
@@ -45,21 +51,21 @@ export default function ArticleCard({ article }) {
           />
         )}
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
             {article.source}
           </span>
           {article.region && (
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+            <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
               {article.region}
             </span>
           )}
           {article.is_video === 1 && (
-            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">
+            <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded">
               ▶ Видео
             </span>
           )}
           {article.published_at && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {new Date(article.published_at).toLocaleDateString("mn-MN")}
               {" · "}
               {new Date(article.published_at).toLocaleTimeString("mn-MN", {
@@ -69,20 +75,20 @@ export default function ArticleCard({ article }) {
             </span>
           )}
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
           {article.title}
         </h2>
         {article.ai_summary && (
-          <p className="text-sm text-gray-600 line-clamp-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
             {article.ai_summary}
           </p>
         )}
         {!article.ai_summary && article.summary && (
-          <p className="text-sm text-gray-500 line-clamp-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
             {article.summary.replace(/<[^>]*>/g, "")}
           </p>
         )}
-        <div className="mt-3 text-xs text-blue-500 font-medium">
+        <div className="mt-3 text-xs text-blue-500 dark:text-blue-400 font-medium">
           Дэлгэрэнгүй унших →
         </div>
       </div>

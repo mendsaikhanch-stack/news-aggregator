@@ -10,10 +10,13 @@ from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-from app.routers import articles, admin, ads, analytics, demo
+from app.routers import articles, admin, ads, analytics, demo, users, bookmarks, push, rss
 from app.services.scraper import fetch_all_feeds, fetch_article_content
 from app.services.ai_summary import translate_to_mongolian, classify_article
 from app.models.article import Article
+from app.models.user import User
+from app.models.bookmark import Bookmark
+from app.models.push_subscription import PushSubscription
 
 # Хүснэгтүүд үүсгэх
 Base.metadata.create_all(bind=engine)
@@ -80,6 +83,19 @@ def auto_fetch_and_translate():
 
             db.commit()
             print(f"[Auto] {new_count} new articles added + translated")
+
+            # Push notification илгээх
+            if new_count > 0:
+                try:
+                    from app.routers.push import send_push_notifications
+                    send_push_notifications(
+                        db,
+                        title="GeregNews - Шинэ мэдээ",
+                        body=f"{new_count} шинэ мэдээ нэмэгдлээ!",
+                        url="/",
+                    )
+                except Exception as e:
+                    print(f"[Push] Notification error: {e}")
         except Exception as e:
             print(f"[Auto] Error: {e}")
         finally:
@@ -97,7 +113,7 @@ scheduler.add_job(auto_fetch_and_translate, "interval", hours=1, id="auto_fetch_
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()
-    print("[Scheduler] Auto-fetch every 30 minutes")
+    print("[Scheduler] Auto-fetch every 1 hour")
     yield
     scheduler.shutdown()
 
@@ -149,6 +165,10 @@ app.include_router(admin.router)
 app.include_router(ads.router)
 app.include_router(analytics.router)
 app.include_router(demo.router)
+app.include_router(users.router)
+app.include_router(bookmarks.router)
+app.include_router(push.router)
+app.include_router(rss.router)
 
 
 @app.get("/")

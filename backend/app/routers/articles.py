@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, distinct
@@ -13,6 +14,14 @@ router = APIRouter(prefix="/api/articles", tags=["articles"])
 limiter = Limiter(key_func=get_remote_address)
 
 
+@router.get("/sources")
+@limiter.limit("30/minute")
+def get_sources(request: Request, db: Session = Depends(get_db)):
+    """Бүх эх сурвалжуудын жагсаалт."""
+    sources = db.query(distinct(Article.source)).filter(Article.source.isnot(None)).all()
+    return sorted([s[0] for s in sources if s[0]])
+
+
 @router.get("/")
 @limiter.limit("60/minute")
 def get_articles(
@@ -23,7 +32,10 @@ def get_articles(
     category: str = Query(None),
     lang: str = Query(None),
     region: str = Query(None),
+    source: str = Query(None),
     is_video: int = Query(None),
+    date_from: str = Query(None),
+    date_to: str = Query(None),
     db: Session = Depends(get_db),
 ):
     """Мэдээнүүдийн жагсаалт авах."""
@@ -37,8 +49,22 @@ def get_articles(
         query = query.filter(Article.lang == lang)
     if region:
         query = query.filter(Article.region == region)
+    if source:
+        query = query.filter(Article.source == source)
     if is_video is not None:
         query = query.filter(Article.is_video == is_video)
+    if date_from:
+        try:
+            dt = datetime.strptime(date_from, "%Y-%m-%d")
+            query = query.filter(Article.published_at >= dt)
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            dt = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            query = query.filter(Article.published_at <= dt)
+        except ValueError:
+            pass
 
     articles = query.order_by(desc(Article.published_at)).offset(skip).limit(limit).all()
     return articles

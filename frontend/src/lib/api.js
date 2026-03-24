@@ -2,11 +2,14 @@
 const isServer = typeof window === "undefined";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isServer ? "http://localhost:8000" : "");
 
-export async function getArticles({ search, category, skip = 0, limit = 20 } = {}) {
+export async function getArticles({ search, category, source, date_from, date_to, skip = 0, limit = 20 } = {}) {
   try {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (category) params.set("category", category);
+    if (source) params.set("source", source);
+    if (date_from) params.set("date_from", date_from);
+    if (date_to) params.set("date_to", date_to);
     params.set("skip", skip);
     params.set("limit", limit);
 

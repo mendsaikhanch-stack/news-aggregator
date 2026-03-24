@@ -55,7 +55,7 @@ function SmallArticle({ article }) {
 
   return (
     <Link href={`/article/${article.id}`}>
-      <div className="flex gap-3 bg-white rounded-lg border hover:shadow-md transition-shadow p-2.5 cursor-pointer">
+      <div className="flex gap-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 hover:shadow-md transition-shadow p-2.5 cursor-pointer">
         {article.image_url ? (
           <img
             src={article.image_url}
@@ -80,7 +80,7 @@ function SmallArticle({ article }) {
                 </span>
               )}
             </div>
-            <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-snug">
               {article.title}
             </h4>
           </div>
@@ -145,10 +145,10 @@ function CategorySection({ category, regular, isAI }) {
   }
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-5 border-t-2 border-blue-700">
+    <section className="max-w-6xl mx-auto px-4 py-5 border-t-2 border-blue-700 dark:border-blue-500">
       {/* Section header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-black text-gray-900">
+        <h2 className="text-lg font-black text-gray-900 dark:text-white">
           {category.icon} {category.label}
         </h2>
         <Link
@@ -187,18 +187,21 @@ export default async function HomePage({ searchParams }) {
   const params = await searchParams;
   const search = params?.search || "";
   const category = params?.category || "";
+  const source = params?.source || "";
+  const date_from = params?.date_from || "";
+  const date_to = params?.date_to || "";
 
   let articles = [];
   let videoArticles = [];
   try {
     [articles, videoArticles] = await Promise.all([
-      getArticles({ search, category, limit: 100 }),
+      getArticles({ search, category, source, date_from, date_to, limit: 100 }),
       getVideos({ limit: 20 }),
     ]);
   } catch {}
 
   // Хайлт/шүүлт горим
-  if (search || category) {
+  if (search || category || source || date_from || date_to) {
     const catInfo = CATEGORIES.find((c) => c.key === category);
     return (
       <>
@@ -208,13 +211,13 @@ export default async function HomePage({ searchParams }) {
         <main className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex justify-center mb-6"><SearchBar /></div>
           {search && (
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
               &ldquo;{search}&rdquo; — {articles.length} мэдээ олдлоо
             </p>
           )}
-          {catInfo && <h2 className="text-2xl font-black mb-4">{catInfo.icon} {catInfo.label}</h2>}
+          {catInfo && <h2 className="text-2xl font-black dark:text-white mb-4">{catInfo.icon} {catInfo.label}</h2>}
           {articles.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
+            <div className="text-center py-20 text-gray-500 dark:text-gray-400">
               <p className="text-xl mb-2">Мэдээ олдсонгүй</p>
             </div>
           ) : (
@@ -246,7 +249,7 @@ export default async function HomePage({ searchParams }) {
       <StockTicker />
       <CategoryBar />
 
-      <div className="relative bg-gray-50">
+      <div className="relative bg-gray-50 dark:bg-gray-900">
         {/* Search */}
         <div className="max-w-6xl mx-auto px-4 pt-4">
           <div className="flex justify-center"><SearchBar /></div>

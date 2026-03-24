@@ -1,6 +1,8 @@
 import "./globals.css";
 import Footer from "../components/Footer";
 import Analytics from "../components/Analytics";
+import { AuthProvider } from "../context/AuthContext";
+import { ThemeProvider } from "../context/ThemeContext";
 
 export const metadata = {
   title: "GEREGNEWS.MN - Дэлхийн мэдээ, Монголоор",
@@ -21,15 +23,25 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="mn">
+    <html lang="mn" suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="alternate" type="application/rss+xml" title="GEREGNEWS.MN RSS" href="/api/rss" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark")document.documentElement.classList.add("dark")}catch(e){}})()`,
+          }}
+        />
       </head>
-      <body className="bg-gray-50 min-h-screen flex flex-col">
-        <Analytics />
-        <div className="flex-1">{children}</div>
-        <Footer />
+      <body className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col transition-colors">
+        <ThemeProvider>
+          <AuthProvider>
+            <Analytics />
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </AuthProvider>
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js")}`,
