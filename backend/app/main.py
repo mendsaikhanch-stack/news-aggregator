@@ -122,9 +122,78 @@ def auto_fetch_and_translate():
         _fetch_lock.release()
 
 
+def batch_translate_articles():
+    """Орчуулга байхгүй англи мэдээнүүдийг бүтэн агуулгаар орчуулах (30 мин тутам)."""
+    if not _fetch_lock.acquire(blocking=False):
+        print("[BatchTranslate] Already running, skipping...")
+        return
+    try:
+        import time
+        db = SessionLocal()
+        try:
+            # Орчуулга байхгүй сүүлийн 20 англи мэдээг авах
+            articles = (
+                db.query(Article)
+                .filter(Article.lang == "en", Article.translated_content.is_(None))
+                .order_by(Article.id.desc())
+                .limit(20)
+                .all()
+            )
+
+            if not articles:
+                print("[BatchTranslate] No articles to translate")
+                return
+
+            translated_count = 0
+            for article in articles:
+                try:
+                    content = fetch_article_content(article.url)
+                    if not content:
+                        print(f"[BatchTranslate] No content: {article.url}")
+                        continue
+
+                    structured = translate_article_structured(article.title, content[:3000])
+                    if structured:
+                        parts = []
+                        if structured.get("FULL_TEXT"):
+                            parts.append(structured["FULL_TEXT"])
+                        if structured.get("KEY_POINTS"):
+                            parts.append("\n\nГол санаанууд:\n" + structured["KEY_POINTS"])
+                        if structured.get("MONGOLIA_IMPACT"):
+                            parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
+                        article.translated_content = "\n".join(parts) if parts else content[:3000]
+                        article.title = structured.get("TITLE", article.title)
+                        article.ai_summary = structured.get("SUMMARY", article.ai_summary)
+                    else:
+                        # Fallback: энгийн орчуулга
+                        translated = translate_to_mongolian(content[:3000])
+                        if translated:
+                            article.translated_content = translated
+
+                    db.commit()
+                    translated_count += 1
+                    time.sleep(1)  # Rate limiting
+
+                except Exception as e:
+                    db.rollback()
+                    print(f"[BatchTranslate] Article error ({article.url}): {e}")
+                    continue
+
+            print(f"[BatchTranslate] {translated_count} articles translated")
+
+        except Exception as e:
+            print(f"[BatchTranslate] Error: {e}")
+        finally:
+            db.close()
+    finally:
+        _fetch_lock.release()
+
+
 # Scheduler тохиргоо — 1 цаг тутам fetch + орчуулга
 scheduler = BackgroundScheduler()
 scheduler.add_job(auto_fetch_and_translate, "interval", hours=1, id="auto_fetch_translate",
+                  max_instances=1, replace_existing=True)
+scheduler.add_job(batch_translate_articles, "interval", minutes=30, id="batch_translate",
                   max_instances=1, replace_existing=True)
 
 

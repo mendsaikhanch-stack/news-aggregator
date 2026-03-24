@@ -51,6 +51,10 @@ RSS_FEEDS = [
     {"url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en", "source": "Google Entertainment", "lang": "en", "region": "america"},
 
     # --- Монгол ---
+    {"url": "https://montsame.mn/rss", "source": "Montsame", "lang": "mn", "region": "mongolia"},
+    {"url": "https://www.montsame.mn/en/rss", "source": "Montsame EN", "lang": "en", "region": "mongolia"},
+    {"url": "https://news.mn/r/", "source": "News.mn RSS", "lang": "mn", "region": "mongolia"},
+    {"url": "https://shuud.mn/rss", "source": "Shuud.mn", "lang": "mn", "region": "mongolia"},
     {"url": "https://ikon.mn/rss", "source": "iKon.mn", "lang": "mn", "region": "mongolia"},
 ]
 
