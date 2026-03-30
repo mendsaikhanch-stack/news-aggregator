@@ -8,3 +8,7 @@ httpx==0.28.1
 beautifulsoup4==4.12.3
 slowapi==0.1.9
 python-jose[cryptography]==3.5.0
+APScheduler==3.11.2
+bcrypt==5.0.0
+passlib==1.7.4
+pywebpush==2.3.0

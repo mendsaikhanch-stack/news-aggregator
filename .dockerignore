@@ -1,0 +1,9 @@
+**/.git
+**/__pycache__
+**/node_modules
+**/.next
+**/venv
+**/*.pyc
+**/.env
+**/ondemand.log
+**/*.db
