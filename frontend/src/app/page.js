@@ -270,7 +270,7 @@ export default async function HomePage({ searchParams }) {
                   <div className="md:col-span-2">
                     <Link href={`/article/${heroArticles[0].id}`}>
                       <div className="bg-white rounded-lg border hover:shadow-lg transition-shadow overflow-hidden cursor-pointer">
-                        <div className="relative w-full h-48 md:h-80 overflow-hidden">
+                        <div className="relative w-full h-48 md:h-[340px] overflow-hidden">
                           {heroArticles[0].image_url ? (
                             <img
                               src={heroArticles[0].image_url}
@@ -309,7 +309,7 @@ export default async function HomePage({ searchParams }) {
 
                 {/* Хажуугийн мэдээнүүд */}
                 <div className="flex flex-col gap-2">
-                  {heroArticles.slice(1, 6).map((article) => (
+                  {heroArticles.slice(1, 7).map((article) => (
                     <SmallArticle key={article.id} article={article} />
                   ))}
                 </div>

@@ -19,6 +19,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    import hashlib
+    # SHA-256 hash-тай нийцүүлэх (legacy .env)
+    if not hashed_password.startswith("$2"):
+        return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
     return bcrypt.verify(plain_password, hashed_password)
 
 
