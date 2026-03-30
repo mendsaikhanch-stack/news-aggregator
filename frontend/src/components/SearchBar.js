@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
@@ -10,6 +11,10 @@ export default function SearchBar() {
   const [dateTo, setDateTo] = useState("");
   const [sources, setSources] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestRef = useRef(null);
+  const timerRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,8 +24,43 @@ export default function SearchBar() {
       .catch(() => {});
   }, []);
 
+  // Click outside хаах
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (suggestRef.current && !suggestRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleQueryChange(e) {
+    const val = e.target.value;
+    setQuery(val);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (val.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    timerRef.current = setTimeout(() => {
+      fetch(`/api/articles/suggest?q=${encodeURIComponent(val.trim())}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((data) => {
+          setSuggestions(data);
+          setShowSuggestions(data.length > 0);
+        })
+        .catch(() => {});
+    }, 300);
+  }
+
   function handleSearch(e) {
     e.preventDefault();
+    setShowSuggestions(false);
     const params = new URLSearchParams();
     if (query.trim()) params.set("search", query.trim());
     if (source) params.set("source", source);
@@ -43,13 +83,36 @@ export default function SearchBar() {
   return (
     <form onSubmit={handleSearch} className="w-full max-w-2xl">
       <div className="flex gap-2">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Мэдээ хайх..."
-          className="flex-1 px-4 py-2.5 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="relative flex-1" ref={suggestRef}>
+          <input
+            type="text"
+            value={query}
+            onChange={handleQueryChange}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            placeholder="Мэдээ хайх..."
+            className="w-full px-4 py-2.5 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              {suggestions.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/article/${s.id}`}
+                  onClick={() => setShowSuggestions(false)}
+                  className="block px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0"
+                >
+                  <p className="text-sm text-gray-900 dark:text-white line-clamp-1">{s.title}</p>
+                  <div className="flex gap-2 mt-0.5">
+                    {s.category && (
+                      <span className="text-xs text-purple-500">{s.category}</span>
+                    )}
+                    <span className="text-xs text-gray-400">{s.source}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}

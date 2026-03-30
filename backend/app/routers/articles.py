@@ -22,6 +22,25 @@ def get_sources(request: Request, db: Session = Depends(get_db)):
     return sorted([s[0] for s in sources if s[0]])
 
 
+@router.get("/suggest")
+@limiter.limit("30/minute")
+def suggest_articles(
+    request: Request,
+    q: str = Query(..., min_length=2),
+    db: Session = Depends(get_db),
+):
+    """Хайлтын autocomplete санал."""
+    pattern = f"%{q}%"
+    articles = (
+        db.query(Article.id, Article.title, Article.category, Article.source)
+        .filter(Article.title.ilike(pattern))
+        .order_by(desc(Article.published_at))
+        .limit(7)
+        .all()
+    )
+    return [{"id": a.id, "title": a.title, "category": a.category, "source": a.source} for a in articles]
+
+
 @router.get("/")
 @limiter.limit("60/minute")
 def get_articles(
@@ -42,7 +61,12 @@ def get_articles(
     query = db.query(Article)
 
     if search:
-        query = query.filter(Article.title.ilike(f"%{search}%"))
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (Article.title.ilike(search_pattern)) |
+            (Article.summary.ilike(search_pattern)) |
+            (Article.ai_summary.ilike(search_pattern))
+        )
     if category:
         query = query.filter(Article.category == category)
     if lang:

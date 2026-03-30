@@ -5,7 +5,10 @@ import { AuthProvider } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 
 export const metadata = {
-  title: "GEREGNEWS.MN - Дэлхийн мэдээ, Монголоор",
+  title: {
+    default: "GEREGNEWS.MN - Дэлхийн мэдээ, Монголоор",
+    template: "%s | GEREGNEWS.MN",
+  },
   description: "Ази, Европ, Америкийн шилдэг мэдээллийн сувгуудаас цаг алдалгүй мэдээлэл хүргэнэ.",
   manifest: "/manifest.json",
   themeColor: "#1d4ed8",
@@ -18,6 +21,22 @@ export const metadata = {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
+  },
+  openGraph: {
+    type: "website",
+    locale: "mn_MN",
+    siteName: "GEREGNEWS.MN",
+    title: "GEREGNEWS.MN - Дэлхийн мэдээ, Монголоор",
+    description: "Ази, Европ, Америкийн шилдэг мэдээллийн сувгуудаас цаг алдалгүй мэдээлэл хүргэнэ.",
+  },
+  twitter: {
+    card: "summary",
+    title: "GEREGNEWS.MN",
+    description: "Ази, Европ, Америкийн шилдэг мэдээллийн сувгуудаас цаг алдалгүй мэдээлэл хүргэнэ.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

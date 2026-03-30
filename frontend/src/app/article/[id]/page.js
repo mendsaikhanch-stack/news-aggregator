@@ -4,6 +4,35 @@ import BookmarkButton from "../../../components/BookmarkButton";
 import Link from "next/link";
 import { getArticle } from "../../../lib/api";
 
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  try {
+    const article = await getArticle(id);
+    if (!article || article.error) return { title: "Мэдээ олдсонгүй" };
+    const description = (article.ai_summary || article.summary || "").slice(0, 160);
+    return {
+      title: `${article.title} | GEREGNEWS.MN`,
+      description,
+      openGraph: {
+        title: article.title,
+        description,
+        type: "article",
+        publishedTime: article.published_at,
+        images: article.image_url ? [{ url: article.image_url }] : [],
+        siteName: "GEREGNEWS.MN",
+      },
+      twitter: {
+        card: article.image_url ? "summary_large_image" : "summary",
+        title: article.title,
+        description,
+        images: article.image_url ? [article.image_url] : [],
+      },
+    };
+  } catch {
+    return { title: "GEREGNEWS.MN" };
+  }
+}
+
 export default async function ArticlePage({ params }) {
   const { id } = await params;
   let article = null;
