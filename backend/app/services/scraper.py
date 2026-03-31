@@ -145,8 +145,47 @@ def parse_feed(feed_url: str, source: str, region: str = "") -> list[dict]:
     return articles
 
 
+def _fetch_mn_article_content(url: str) -> tuple[str, str | None]:
+    """Монгол мэдээний агуулга + зургийг татах."""
+    try:
+        resp = httpx.get(url, timeout=10, follow_redirects=True, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        })
+        if resp.status_code != 200:
+            return "", None
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tag in soup.find_all(["script", "style", "nav", "footer", "header", "aside", "iframe"]):
+            tag.decompose()
+
+        # OG image
+        og_img = soup.find("meta", property="og:image")
+        image_url = og_img["content"] if og_img and og_img.get("content") else None
+
+        # Content
+        content = None
+        for sel in ["article", ".article-body", ".article-content", ".post-content", ".entry-content", ".news-content", ".content-body", "main"]:
+            el = soup.select_one(sel)
+            if el:
+                paragraphs = el.find_all("p")
+                if paragraphs:
+                    content = "\n\n".join(p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 15)
+                    if content and len(content) > 50:
+                        break
+                    content = None
+
+        if not content:
+            paragraphs = soup.find_all("p")
+            texts = [p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20]
+            if texts:
+                content = "\n\n".join(texts[:15])
+
+        return (content or "")[:5000], image_url
+    except Exception:
+        return "", None
+
+
 def scrape_mongolian_site(site_config: dict) -> list[dict]:
-    """Монгол мэдээний сайтаас web scraping хийх (универсал)."""
+    """Монгол мэдээний сайтаас web scraping хийх — title + content + image."""
     articles = []
     try:
         resp = httpx.get(site_config["url"], timeout=15, follow_redirects=True, headers={
@@ -156,18 +195,17 @@ def scrape_mongolian_site(site_config: dict) -> list[dict]:
         prefix = site_config.get("link_prefix", "")
         min_len = site_config.get("min_title_len", 15)
         seen_urls = set()
+        links = []
 
         for a_tag in soup.find_all("a", href=True):
             href = a_tag["href"]
             title = a_tag.get_text(strip=True)
 
-            # Шүүлт
             if not title or len(title) < min_len or len(title) > 300:
                 continue
             if href == "#" or "javascript:" in href:
                 continue
 
-            # URL бүрдүүлэх
             if href.startswith("/"):
                 href = prefix + href
             elif not href.startswith("http"):
@@ -177,24 +215,31 @@ def scrape_mongolian_site(site_config: dict) -> list[dict]:
                 continue
             seen_urls.add(href)
 
-            # Зураг олох
+            # Зураг олох (link доторх)
             img = a_tag.find("img")
             image_url = None
             if img:
                 image_url = img.get("src") or img.get("data-src")
 
+            links.append({"title": title[:300], "url": href, "image_url": image_url})
+            if len(links) >= 10:
+                break
+
+        # Мэдээ тус бүрийн агуулгыг татах
+        for link in links:
+            content, og_image = _fetch_mn_article_content(link["url"])
+            summary = content[:300] if content else ""
+
             articles.append({
-                "title": title[:300],
-                "url": href,
+                "title": link["title"],
+                "url": link["url"],
                 "source": site_config["source"],
-                "summary": "",
-                "image_url": image_url,
+                "summary": summary,
+                "image_url": link["image_url"] or og_image,
                 "published_at": datetime.now(),
                 "region": "mongolia",
+                "full_content": content,
             })
-
-            if len(articles) >= 15:
-                break
 
     except Exception as e:
         logger.info(f"Scrape алдаа ({site_config['source']}): {e}")

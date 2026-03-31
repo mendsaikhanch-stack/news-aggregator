@@ -90,7 +90,13 @@ def get_articles(
         except ValueError:
             pass
 
-    articles = query.order_by(desc(Article.published_at)).offset(skip).limit(limit).all()
+    # Summary/content байгаа мэдээг эхэнд, хоосон мэдээг доор
+    from sqlalchemy import case
+    has_content = case(
+        (Article.ai_summary.isnot(None) & (Article.ai_summary != ""), 0),
+        else_=1,
+    )
+    articles = query.order_by(has_content, desc(Article.published_at)).offset(skip).limit(limit).all()
     return articles
 
 
@@ -101,16 +107,34 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
     if not article:
         raise HTTPException(status_code=404, detail="Мэдээ олдсонгүй")
 
-    # Агуулга байхгүй бол on-demand татаж орчуулах
-    if not article.translated_content and article.lang != "mn":
+    # Агуулга байхгүй бол on-demand татах
+    needs_content = (
+        (not article.full_content and not article.translated_content and not article.summary)
+        or (not article.translated_content and article.lang == "en")
+    )
+
+    if needs_content:
         try:
             from app.services.scraper import fetch_article_content
             from app.services.ai_summary import translate_article_structured, translate_to_mongolian
 
-            full_content = fetch_article_content(article.url)
-            if full_content:
-                article.full_content = full_content
+            # Content татах (MN + EN аль алинд)
+            if not article.full_content:
+                full_content = fetch_article_content(article.url)
+                if full_content:
+                    article.full_content = full_content
+                    # MN мэдээнд шууд summary + translated_content-д хадгалах
+                    if article.lang == "mn":
+                        if not article.summary:
+                            article.summary = full_content[:300]
+                            article.ai_summary = full_content[:300]
+                        article.translated_content = full_content
+                        db.commit()
+                        db.refresh(article)
+                        return article
 
+            full_content = article.full_content
+            if full_content and article.lang != "mn":
                 structured = translate_article_structured(article.title, full_content[:3000])
                 if structured:
                     parts = []

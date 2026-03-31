@@ -68,11 +68,12 @@ def auto_fetch_and_translate():
                     lang = "mn" if is_mn else "en"
                     category = classify_article(data["title"], summary_raw)
 
-                    # Монгол бол шууд хадгалах
+                    # Монгол бол шууд хадгалах (content-тэй)
                     if is_mn:
                         title_mn = data["title"]
-                        summary_mn = summary_raw
-                        ai_summary_mn = summary_raw
+                        full_content = data.get("full_content", "")
+                        summary_mn = summary_raw or (full_content[:300] if full_content else "")
+                        ai_summary_mn = summary_mn
                     else:
                         # Орчуулга оролдох, амжилтгүй бол англиар хадгалах
                         try:
@@ -109,6 +110,8 @@ def auto_fetch_and_translate():
                         region=data.get("region", ""),
                         is_video=1 if data.get("is_video") else 0,
                         published_at=data.get("published_at"),
+                        full_content=data.get("full_content"),
+                        translated_content=data.get("full_content") if is_mn else None,
                     )
                     db.add(article)
                     db.commit()
