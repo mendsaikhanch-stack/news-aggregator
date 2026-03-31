@@ -1,8 +1,11 @@
+import logging
 import feedparser
 import httpx
 from bs4 import BeautifulSoup
 from datetime import datetime
 from app.models.article import Article
+
+logger = logging.getLogger("geregnews")
 
 # RSS feed-үүд
 RSS_FEEDS = [
@@ -194,7 +197,7 @@ def scrape_mongolian_site(site_config: dict) -> list[dict]:
                 break
 
     except Exception as e:
-        print(f"Scrape алдаа ({site_config['source']}): {e}")
+        logger.info(f"Scrape алдаа ({site_config['source']}): {e}")
 
     return articles
 
@@ -255,14 +258,14 @@ def fetch_youtube_videos() -> list[dict]:
                             "region": "mongolia",
                         })
                     if seen:
-                        print(f"[YT] {channel['source']}: {len(seen)} videos (HTML scrape)")
+                        logger.info(f"[YT] {channel['source']}: {len(seen)} videos (HTML scrape)")
                     else:
-                        print(f"[YT] {channel['source']}: 0 videos (no videoId found)")
+                        logger.info(f"[YT] {channel['source']}: 0 videos (no videoId found)")
                 else:
-                    print(f"[YT] {channel['source']}: HTTP {resp.status_code}")
+                    logger.info(f"[YT] {channel['source']}: HTTP {resp.status_code}")
 
         except Exception as e:
-            print(f"[YT FAIL] {channel['source']}: {e}")
+            logger.info(f"[YT FAIL] {channel['source']}: {e}")
 
     return articles
 
@@ -310,7 +313,7 @@ def fetch_article_content(url: str) -> str | None:
         return None
 
     except Exception as e:
-        print(f"Content татах алдаа ({url}): {e}")
+        logger.info(f"Content татах алдаа ({url}): {e}")
         return None
 
 
@@ -329,7 +332,7 @@ def fetch_all_feeds() -> list[dict]:
                 success_sources.append(f"{feed['source']}({len(articles)})")
         except Exception as e:
             failed_sources.append(feed["source"])
-            print(f"[RSS FAIL] {feed['source']}: {e}")
+            logger.info(f"[RSS FAIL] {feed['source']}: {e}")
 
     # Монгол сайтуудаас scraping (retry 1 удаа)
     for site in MN_SCRAPE_SITES:
@@ -345,10 +348,10 @@ def fetch_all_feeds() -> list[dict]:
                 success_sources.append(f"{site['source']}({len(articles)})")
             else:
                 failed_sources.append(site["source"])
-                print(f"[MN SCRAPE FAIL] {site['source']}: 0 articles after retry")
+                logger.info(f"[MN SCRAPE FAIL] {site['source']}: 0 articles after retry")
         except Exception as e:
             failed_sources.append(site["source"])
-            print(f"[MN SCRAPE FAIL] {site['source']}: {e}")
+            logger.info(f"[MN SCRAPE FAIL] {site['source']}: {e}")
 
     # YouTube ТВ бичлэгүүд
     try:
@@ -360,10 +363,10 @@ def fetch_all_feeds() -> list[dict]:
             failed_sources.append("YouTube")
     except Exception as e:
         failed_sources.append("YouTube")
-        print(f"[YT FAIL] {e}")
+        logger.info(f"[YT FAIL] {e}")
 
-    print(f"[Fetch] OK: {len(success_sources)} sources, {len(all_articles)} articles")
+    logger.info(f"[Fetch] OK: {len(success_sources)} sources, {len(all_articles)} articles")
     if failed_sources:
-        print(f"[Fetch] FAILED: {', '.join(failed_sources)}")
+        logger.info(f"[Fetch] FAILED: {', '.join(failed_sources)}")
 
     return all_articles

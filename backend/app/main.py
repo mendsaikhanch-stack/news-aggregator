@@ -1,13 +1,10 @@
-import sys
-import io
+import logging
 import threading
 from threading import Thread
 from contextlib import asynccontextmanager
 
-# Windows console encoding fix
-if sys.stdout.encoding != "utf-8":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+logger = logging.getLogger("geregnews")
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -35,7 +32,7 @@ _fetch_lock = threading.Lock()
 def auto_fetch_and_translate():
     """Мэдээ татаж, гарчиг+хураангуйг шууд орчуулах (1 цаг тутам)."""
     if not _fetch_lock.acquire(blocking=False):
-        print("[Auto] Already running, skipping...")
+        logger.info("[Auto] Already running, skipping...")
         return
     try:
         db = SessionLocal()
@@ -100,15 +97,15 @@ def auto_fetch_and_translate():
                     # 50 мэдээ тутам commit (алдаанаас хамгаалах)
                     if new_count % 50 == 0:
                         db.commit()
-                        print(f"[Auto] {new_count} articles saved so far...")
+                        logger.info(f"[Auto] {new_count} articles saved so far...")
 
                 except Exception as e:
                     db.rollback()
-                    print(f"[Auto] Article error ({data.get('source', '?')}): {e}")
+                    logger.info(f"[Auto] Article error ({data.get('source', '?')}): {e}")
                     continue
 
             db.commit()
-            print(f"[Auto] {new_count} new articles added + translated")
+            logger.info(f"[Auto] {new_count} new articles added + translated")
 
             # Push notification илгээх
             if new_count > 0:
@@ -121,9 +118,9 @@ def auto_fetch_and_translate():
                         url="/",
                     )
                 except Exception as e:
-                    print(f"[Push] Notification error: {e}")
+                    logger.info(f"[Push] Notification error: {e}")
         except Exception as e:
-            print(f"[Auto] Error: {e}")
+            logger.info(f"[Auto] Error: {e}")
         finally:
             db.close()
     finally:
@@ -133,7 +130,7 @@ def auto_fetch_and_translate():
 def batch_translate_articles():
     """Орчуулга байхгүй англи мэдээнүүдийг бүтэн агуулгаар орчуулах (30 мин тутам)."""
     if not _fetch_lock.acquire(blocking=False):
-        print("[BatchTranslate] Already running, skipping...")
+        logger.info("[BatchTranslate] Already running, skipping...")
         return
     try:
         import time
@@ -149,7 +146,7 @@ def batch_translate_articles():
             )
 
             if not articles:
-                print("[BatchTranslate] No articles to translate")
+                logger.info("[BatchTranslate] No articles to translate")
                 return
 
             translated_count = 0
@@ -157,7 +154,7 @@ def batch_translate_articles():
                 try:
                     content = fetch_article_content(article.url)
                     if not content:
-                        print(f"[BatchTranslate] No content: {article.url}")
+                        logger.info(f"[BatchTranslate] No content: {article.url}")
                         continue
 
                     structured = translate_article_structured(article.title, content[:3000])
@@ -184,13 +181,13 @@ def batch_translate_articles():
 
                 except Exception as e:
                     db.rollback()
-                    print(f"[BatchTranslate] Article error ({article.url}): {e}")
+                    logger.info(f"[BatchTranslate] Article error ({article.url}): {e}")
                     continue
 
-            print(f"[BatchTranslate] {translated_count} articles translated")
+            logger.info(f"[BatchTranslate] {translated_count} articles translated")
 
         except Exception as e:
-            print(f"[BatchTranslate] Error: {e}")
+            logger.info(f"[BatchTranslate] Error: {e}")
         finally:
             db.close()
     finally:
@@ -211,12 +208,12 @@ _startup_done = False
 async def lifespan(app: FastAPI):
     global _startup_done
     scheduler.start()
-    print("[Scheduler] Auto-fetch every 1 hour, batch translate every 30 min")
+    logger.info("[Scheduler] Auto-fetch every 1 hour, batch translate every 30 min")
 
     # Startup дээр шууд fetch эхлүүлэх (background thread-ээр)
     if not _startup_done:
         _startup_done = True
-        print("[Startup] Fetching articles on startup...")
+        logger.info("[Startup] Fetching articles on startup...")
         Thread(target=_safe_startup_fetch, daemon=True).start()
 
     yield
@@ -230,13 +227,13 @@ def _safe_startup_fetch():
     try:
         auto_fetch_and_translate()
     except Exception as e:
-        print(f"[Startup] Fetch error (will retry on schedule): {e}")
+        logger.info(f"[Startup] Fetch error (will retry on schedule): {e}")
     # Орчуулаагүй мэдээг мөн шууд орчуулах
     try:
         time.sleep(10)
         batch_translate_articles()
     except Exception as e:
-        print(f"[Startup] Batch translate error: {e}")
+        logger.info(f"[Startup] Batch translate error: {e}")
 
 
 # Rate limiter

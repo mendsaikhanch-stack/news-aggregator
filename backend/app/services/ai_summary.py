@@ -1,8 +1,11 @@
 import re
 import time
+import logging
 import httpx
 from deep_translator import GoogleTranslator
 from app.config import settings
+
+logger = logging.getLogger("geregnews")
 
 # ============================================================
 # Орчуулгын Fallback Chain
@@ -173,7 +176,7 @@ def _groq_translate_chunk(text: str) -> str | None:
                 _translator_stats["groq"] += 1
                 return translated
     else:
-        print(f"[Groq] API error: {resp.status_code}")
+        logger.info(f"[Groq] API error: {resp.status_code}")
     return None
 
 
@@ -240,7 +243,7 @@ def _gemini_translate_chunk(text: str) -> str | None:
                     _translator_stats["gemini"] += 1
                     return translated
     else:
-        print(f"[Gemini] API error: {resp.status_code} {resp.text[:200]}")
+        logger.info(f"[Gemini] API error: {resp.status_code} {resp.text[:200]}")
     return None
 
 
@@ -632,9 +635,9 @@ def _groq_structured(prompt: str) -> dict | None:
             if parsed:
                 _translator_stats["groq"] += 1
                 return parsed
-            print(f"[Groq Structured] Parse failed, raw: {raw[:200]}")
+            logger.info(f"[Groq Structured] Parse failed, raw: {raw[:200]}")
     else:
-        print(f"[Groq Structured] API error: {resp.status_code}")
+        logger.info(f"[Groq Structured] API error: {resp.status_code}")
     return None
 
 
@@ -661,9 +664,9 @@ def _gemini_structured(prompt: str) -> dict | None:
                 if parsed:
                     _translator_stats["gemini"] += 1
                     return parsed
-                print(f"[Gemini Structured] Parse failed, raw: {raw[:200]}")
+                logger.info(f"[Gemini Structured] Parse failed, raw: {raw[:200]}")
     else:
-        print(f"[Gemini Structured] API error: {resp.status_code}")
+        logger.info(f"[Gemini Structured] API error: {resp.status_code}")
     return None
 
 
@@ -694,9 +697,9 @@ def _claude_structured(prompt: str) -> dict | None:
             if parsed:
                 _translator_stats["claude"] += 1
                 return parsed
-            print(f"[Claude Structured] Parse failed, raw: {raw[:200]}")
+            logger.info(f"[Claude Structured] Parse failed, raw: {raw[:200]}")
     else:
-        print(f"[Claude Structured] API error: {resp.status_code}")
+        logger.info(f"[Claude Structured] API error: {resp.status_code}")
     return None
 
 
@@ -725,7 +728,7 @@ def translate_to_mongolian(text: str) -> str | None:
             if result:
                 return result
         except Exception as e:
-            print(f"[{name}] орчуулга алдаа: {e}")
+            logger.info(f"[{name}] орчуулга алдаа: {e}")
             continue
 
     _translator_stats["failed"] += 1
