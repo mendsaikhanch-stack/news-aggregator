@@ -30,7 +30,14 @@ _fetch_lock = threading.Lock()
 
 
 def auto_fetch_and_translate():
-    """Мэдээ татаж, гарчиг+хураангуйг шууд орчуулах (1 цаг тутам)."""
+    """Мэдээ татаж, гарчиг+хураангуйг шууд орчуулах (1 цаг тутам).
+
+    Алгоритм:
+    1. Бүх эх сурвалжаас мэдээ татах
+    2. URL давхардал шалгаж, шинэ мэдээг хадгалах
+    3. Англи мэдээг орчуулах оролдлого (амжилтгүй бол англиар хадгалаад batch-д үлдээх)
+    4. Мэдээ тус бүрийг нэг нэгээр commit хийх (нэг алдаа бүгдэд нөлөөлөхгүй)
+    """
     if not _fetch_lock.acquire(blocking=False):
         logger.info("[Auto] Already running, skipping...")
         return
@@ -39,31 +46,43 @@ def auto_fetch_and_translate():
         try:
             raw_articles = fetch_all_feeds()
             new_count = 0
+            skip_count = 0
+            error_count = 0
             mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Montsame", "24tsag.mn", "Shuud.mn", "Eagle News", "MNB", "TV9 Mongolia"}
 
-            for data in raw_articles:
-                try:
-                    existing = db.query(Article).filter(Article.url == data["url"]).first()
-                    if existing:
-                        continue
+            # URL давхардал хурдан шалгах
+            existing_urls = set(
+                row[0] for row in db.query(Article.url).filter(
+                    Article.url.in_([d["url"] for d in raw_articles])
+                ).all()
+            )
 
+            for data in raw_articles:
+                if data["url"] in existing_urls:
+                    skip_count += 1
+                    continue
+
+                try:
                     summary_raw = data.get("summary", "")
                     is_mn = data["source"] in mn_sources
                     lang = "mn" if is_mn else "en"
                     category = classify_article(data["title"], summary_raw)
 
-                    # Монгол бол шууд, англи бол бүтэцтэй prompt-р орчуулах
+                    # Монгол бол шууд хадгалах
                     if is_mn:
                         title_mn = data["title"]
                         summary_mn = summary_raw
                         ai_summary_mn = summary_raw
                     else:
-                        # Бүтэцтэй орчуулга оролдох
-                        structured = translate_article_structured(data["title"], summary_raw)
+                        # Орчуулга оролдох, амжилтгүй бол англиар хадгалах
+                        try:
+                            structured = translate_article_structured(data["title"], summary_raw)
+                        except Exception:
+                            structured = None
+
                         if structured:
                             title_mn = structured.get("TITLE", data["title"])
                             summary_mn = structured.get("SUMMARY", "")
-                            # FULL_TEXT + KEY_POINTS + MONGOLIA_IMPACT нэгтгэж ai_summary-д хадгалах
                             parts = []
                             if structured.get("FULL_TEXT"):
                                 parts.append(structured["FULL_TEXT"])
@@ -73,10 +92,10 @@ def auto_fetch_and_translate():
                                 parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
                             ai_summary_mn = "\n".join(parts) if parts else summary_mn
                         else:
-                            # Fallback: хуучин аргаар орчуулах
-                            title_mn = translate_to_mongolian(data["title"]) or data["title"]
-                            summary_mn = translate_to_mongolian(summary_raw) or summary_raw if summary_raw else ""
-                            ai_summary_mn = summary_mn
+                            # Англиар хадгалаад batch translate-д үлдээнэ
+                            title_mn = data["title"]
+                            summary_mn = summary_raw
+                            ai_summary_mn = summary_raw
 
                     article = Article(
                         title=title_mn,
@@ -92,35 +111,33 @@ def auto_fetch_and_translate():
                         published_at=data.get("published_at"),
                     )
                     db.add(article)
+                    db.commit()
+                    existing_urls.add(data["url"])
                     new_count += 1
-
-                    # 50 мэдээ тутам commit (алдаанаас хамгаалах)
-                    if new_count % 50 == 0:
-                        db.commit()
-                        logger.info(f"[Auto] {new_count} articles saved so far...")
 
                 except Exception as e:
                     db.rollback()
-                    logger.info(f"[Auto] Article error ({data.get('source', '?')}): {e}")
+                    error_count += 1
+                    if error_count <= 5:
+                        logger.info(f"[Auto] Error ({data.get('source', '?')}): {e}")
                     continue
 
-            db.commit()
-            logger.info(f"[Auto] {new_count} new articles added + translated")
+            logger.info(f"[Auto] Done: +{new_count} new, {skip_count} skipped, {error_count} errors")
 
-            # Push notification илгээх
+            # Push notification
             if new_count > 0:
                 try:
                     from app.routers.push import send_push_notifications
                     send_push_notifications(
                         db,
-                        title="GeregNews - Шинэ мэдээ",
-                        body=f"{new_count} шинэ мэдээ нэмэгдлээ!",
+                        title="GeregNews",
+                        body=f"{new_count} shine medee nemegdlee!",
                         url="/",
                     )
-                except Exception as e:
-                    logger.info(f"[Push] Notification error: {e}")
+                except Exception:
+                    pass
         except Exception as e:
-            logger.info(f"[Auto] Error: {e}")
+            logger.info(f"[Auto] Fatal: {e}")
         finally:
             db.close()
     finally:
@@ -130,13 +147,13 @@ def auto_fetch_and_translate():
 def batch_translate_articles():
     """Орчуулга байхгүй англи мэдээнүүдийг бүтэн агуулгаар орчуулах (30 мин тутам)."""
     if not _fetch_lock.acquire(blocking=False):
-        logger.info("[BatchTranslate] Already running, skipping...")
+        logger.info("[Batch] Already running, skipping...")
         return
     try:
         import time
         db = SessionLocal()
         try:
-            # Орчуулга байхгүй англи мэдээг авах (50 хүртэл)
+            # Орчуулга байхгүй англи мэдээг авах
             articles = (
                 db.query(Article)
                 .filter(Article.lang == "en", Article.translated_content.is_(None))
@@ -146,15 +163,20 @@ def batch_translate_articles():
             )
 
             if not articles:
-                logger.info("[BatchTranslate] No articles to translate")
+                logger.info("[Batch] No articles to translate")
                 return
 
+            logger.info(f"[Batch] Translating {len(articles)} articles...")
             translated_count = 0
+            fail_count = 0
+
             for article in articles:
                 try:
                     content = fetch_article_content(article.url)
                     if not content:
-                        logger.info(f"[BatchTranslate] No content: {article.url}")
+                        # Content татах амжилтгүй — хоосон орчуулга тэмдэглэх
+                        article.translated_content = ""
+                        db.commit()
                         continue
 
                     structured = translate_article_structured(article.title, content[:3000])
@@ -174,20 +196,24 @@ def batch_translate_articles():
                         translated = translate_to_mongolian(content[:3000])
                         if translated:
                             article.translated_content = translated
+                        else:
+                            article.translated_content = ""
 
                     db.commit()
                     translated_count += 1
-                    time.sleep(1)  # Rate limiting
+                    time.sleep(1)
 
                 except Exception as e:
                     db.rollback()
-                    logger.info(f"[BatchTranslate] Article error ({article.url}): {e}")
+                    fail_count += 1
+                    if fail_count <= 3:
+                        logger.info(f"[Batch] Error: {e}")
                     continue
 
-            logger.info(f"[BatchTranslate] {translated_count} articles translated")
+            logger.info(f"[Batch] Done: {translated_count} translated, {fail_count} failed")
 
         except Exception as e:
-            logger.info(f"[BatchTranslate] Error: {e}")
+            logger.info(f"[Batch] Fatal: {e}")
         finally:
             db.close()
     finally:
