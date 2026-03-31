@@ -93,10 +93,10 @@ def auto_fetch_and_translate():
                                 parts.append("\n\nМонголд үзүүлэх нөлөө:\n" + structured["MONGOLIA_IMPACT"])
                             ai_summary_mn = "\n".join(parts) if parts else summary_mn
                         else:
-                            # Англиар хадгалаад batch translate-д үлдээнэ
-                            title_mn = data["title"]
-                            summary_mn = summary_raw
-                            ai_summary_mn = summary_raw
+                            # Structured амжилтгүй — Google Translate fallback
+                            title_mn = translate_to_mongolian(data["title"]) or data["title"]
+                            summary_mn = translate_to_mongolian(summary_raw) if summary_raw else ""
+                            ai_summary_mn = summary_mn or summary_raw
 
                     article = Article(
                         title=title_mn,
