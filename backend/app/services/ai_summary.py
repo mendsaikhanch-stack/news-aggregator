@@ -748,62 +748,73 @@ def get_translator_stats() -> dict:
 # Keyword-д суурилсан ангилал
 # ============================================================
 
+# (keyword, weight) — weight өндөр = илүү тодорхой
 CATEGORY_KEYWORDS = {
     "politics": [
-        "president", "minister", "parliament", "election", "vote", "government",
-        "senate", "congress", "democrat", "republican", "diplomacy", "ambassador",
-        "sanctions", "treaty", "legislation", "law", "policy", "campaign",
-        "ерөнхийлөгч", "сайд", "засгийн газар", "сонгууль", "хууль", "улс төр",
-        "парламент", "их хурал", "нам", "бодлого",
+        ("president", 2), ("prime minister", 3), ("minister", 2), ("parliament", 3),
+        ("election", 3), ("vote", 2), ("government", 1), ("senate", 3), ("congress", 3),
+        ("democrat", 2), ("republican", 2), ("diplomacy", 2), ("ambassador", 2),
+        ("sanctions", 2), ("treaty", 2), ("legislation", 2), ("political", 2), ("campaign", 1),
+        ("coup", 3), ("impeach", 3), ("referendum", 3),
+        ("ерөнхийлөгч", 3), ("сайд", 2), ("засгийн газар", 2), ("сонгууль", 3),
+        ("хууль", 2), ("улс төр", 3), ("парламент", 3), ("их хурал", 3),
     ],
     "business": [
-        "economy", "market", "stock", "trade", "inflation", "gdp", "bank",
-        "investment", "startup", "revenue", "profit", "company", "corporate",
-        "bitcoin", "crypto", "finance", "dollar", "yuan", "currency", "tax",
-        "эдийн засаг", "зах зээл", "хөрөнгө", "банк", "бизнес", "компани",
-        "худалдаа", "татвар", "валют", "арилжаа",
+        ("economy", 2), ("stock market", 3), ("trade war", 3), ("inflation", 3),
+        ("gdp", 3), ("central bank", 3), ("investment", 2), ("revenue", 2),
+        ("profit", 2), ("corporate", 2), ("bitcoin", 2), ("crypto", 2),
+        ("finance", 2), ("currency", 2), ("tax", 1), ("tariff", 3), ("recession", 3),
+        ("эдийн засаг", 3), ("зах зээл", 2), ("хөрөнгө оруулалт", 3),
+        ("банк", 2), ("бизнес", 2), ("худалдаа", 2), ("татвар", 2),
     ],
     "tech": [
-        "ai", "artificial intelligence", "software", "google", "apple", "microsoft",
-        "robot", "chip", "semiconductor", "cyber", "hack", "data", "algorithm",
-        "smartphone", "app", "tesla", "spacex", "satellite", "5g", "quantum",
-        "технологи", "програм", "хиймэл оюун", "робот", "чип",
+        ("artificial intelligence", 3), ("machine learning", 3), ("software", 2),
+        ("robot", 2), ("semiconductor", 3), ("cybersecurity", 3), ("algorithm", 2),
+        ("smartphone", 2), ("spacex", 2), ("satellite", 1), ("5g", 2), ("quantum", 2),
+        ("технологи", 3), ("програм", 2), ("хиймэл оюун", 3), ("робот", 2), ("чип", 2),
     ],
     "sports": [
-        "football", "soccer", "basketball", "tennis", "olympic", "fifa", "nba",
-        "champion", "league", "match", "tournament", "athlete", "medal", "goal",
-        "cricket", "rugby", "boxing", "racing", "f1", "world cup",
-        "спорт", "тэмцээн", "аварга", "тоглолт", "медаль", "хөл бөмбөг",
+        ("football", 2), ("soccer", 2), ("basketball", 2), ("tennis", 2),
+        ("olympic", 3), ("fifa", 3), ("nba", 3), ("champion", 2), ("tournament", 2),
+        ("athlete", 2), ("medal", 2), ("cricket", 2), ("rugby", 2), ("boxing", 2),
+        ("world cup", 3), ("premier league", 3),
+        ("спорт", 3), ("тэмцээн", 2), ("аварга", 2), ("тоглолт", 2), ("медаль", 2),
     ],
     "science": [
-        "research", "study", "scientist", "discovery", "space", "nasa", "climate",
-        "environment", "species", "fossil", "physics", "chemistry", "biology",
-        "earthquake", "volcano", "ocean", "carbon", "emission", "renewable",
-        "судалгаа", "шинжлэх ухаан", "сансар", "уур амьсгал", "байгаль орчин",
+        ("research", 1), ("scientist", 2), ("discovery", 2), ("space", 1), ("nasa", 3),
+        ("climate change", 3), ("species", 2), ("fossil", 2), ("physics", 2),
+        ("earthquake", 2), ("volcano", 2), ("carbon emission", 3), ("renewable energy", 3),
+        ("судалгаа", 2), ("шинжлэх ухаан", 3), ("сансар", 2), ("уур амьсгал", 3),
     ],
     "health": [
-        "health", "vaccine", "virus", "disease", "hospital", "doctor", "patient",
-        "cancer", "mental health", "who", "pandemic", "epidemic", "medicine",
-        "drug", "treatment", "surgery", "outbreak", "covid", "flu",
-        "эрүүл мэнд", "вакцин", "өвчин", "эмнэлэг", "эмч", "эм",
+        ("vaccine", 3), ("virus", 2), ("disease", 2), ("hospital", 2), ("patient", 1),
+        ("cancer", 3), ("mental health", 3), ("pandemic", 3), ("epidemic", 3),
+        ("medicine", 2), ("surgery", 2), ("outbreak", 3), ("covid", 3),
+        ("эрүүл мэнд", 3), ("вакцин", 3), ("өвчин", 2), ("эмнэлэг", 2),
     ],
     "entertainment": [
-        "movie", "film", "music", "concert", "celebrity", "oscar", "grammy",
-        "netflix", "series", "actor", "singer", "album", "festival", "art",
-        "fashion", "disney", "hollywood", "bollywood", "game", "gaming",
-        "кино", "дуу", "урлаг", "жүжигчин", "тоглоом", "соёл",
+        ("movie", 2), ("film", 2), ("music", 2), ("concert", 2), ("celebrity", 2),
+        ("oscar", 3), ("grammy", 3), ("netflix", 2), ("actor", 2), ("singer", 2),
+        ("album", 2), ("festival", 1), ("hollywood", 3), ("bollywood", 3),
+        ("кино", 3), ("дуу", 2), ("урлаг", 2), ("жүжигчин", 3), ("соёл", 2),
     ],
 }
 
 
 def classify_article(title: str, summary: str) -> str:
-    """Гарчиг болон хураангуйд суурилан мэдээг ангилах."""
+    """Гарчиг болон хураангуйд суурилан мэдээг ангилах (weight-тай keyword matching)."""
     text = f"{title} {summary}".lower()
     scores = {}
     for category, keywords in CATEGORY_KEYWORDS.items():
-        score = sum(1 for kw in keywords if kw in text)
+        score = 0
+        for kw, weight in keywords:
+            # Word boundary шалгах (хэт ерөнхий keyword-г зөв тааруулах)
+            if f" {kw} " in f" {text} " or f" {kw}." in f" {text}" or f" {kw}," in f" {text}":
+                score += weight
         if score > 0:
             scores[category] = score
+
     if scores:
+        # Хамгийн өндөр оноотой категорийг авах, тэнцвэл politics > business > world
         return max(scores, key=scores.get)
     return "world"

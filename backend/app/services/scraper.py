@@ -283,30 +283,55 @@ def fetch_article_content(url: str) -> str | None:
 
 
 def fetch_all_feeds() -> list[dict]:
-    """Бүх эх сурвалжаас мэдээ цуглуулах."""
+    """Бүх эх сурвалжаас мэдээ цуглуулах. Алдаа бүрийг лог хийж, үргэлжлүүлнэ."""
     all_articles = []
+    success_sources = []
+    failed_sources = []
 
     # RSS feeds
     for feed in RSS_FEEDS:
         try:
             articles = parse_feed(feed["url"], feed["source"], feed.get("region", ""))
             all_articles.extend(articles)
+            if articles:
+                success_sources.append(f"{feed['source']}({len(articles)})")
         except Exception as e:
-            print(f"Feed алдаа ({feed['source']}): {e}")
+            failed_sources.append(feed["source"])
+            print(f"[RSS FAIL] {feed['source']}: {e}")
 
-    # Монгол сайтуудаас scraping
+    # Монгол сайтуудаас scraping (retry 1 удаа)
     for site in MN_SCRAPE_SITES:
         try:
             articles = scrape_mongolian_site(site)
+            if not articles:
+                # Retry 1 удаа
+                import time
+                time.sleep(2)
+                articles = scrape_mongolian_site(site)
             all_articles.extend(articles)
+            if articles:
+                success_sources.append(f"{site['source']}({len(articles)})")
+            else:
+                failed_sources.append(site["source"])
+                print(f"[MN SCRAPE FAIL] {site['source']}: 0 articles after retry")
         except Exception as e:
-            print(f"Scrape алдаа ({site['source']}): {e}")
+            failed_sources.append(site["source"])
+            print(f"[MN SCRAPE FAIL] {site['source']}: {e}")
 
     # YouTube ТВ бичлэгүүд
     try:
         videos = fetch_youtube_videos()
         all_articles.extend(videos)
+        if videos:
+            success_sources.append(f"YouTube({len(videos)})")
+        else:
+            failed_sources.append("YouTube")
     except Exception as e:
-        print(f"YouTube алдаа: {e}")
+        failed_sources.append("YouTube")
+        print(f"[YT FAIL] {e}")
+
+    print(f"[Fetch] OK: {len(success_sources)} sources, {len(all_articles)} articles")
+    if failed_sources:
+        print(f"[Fetch] FAILED: {', '.join(failed_sources)}")
 
     return all_articles

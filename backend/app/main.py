@@ -1,4 +1,5 @@
 import threading
+from threading import Thread
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,7 +35,7 @@ def auto_fetch_and_translate():
         try:
             raw_articles = fetch_all_feeds()
             new_count = 0
-            mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Eagle News", "MNB", "TV9 Mongolia"}
+            mn_sources = {"iKon.mn", "GoGo.mn", "News.mn", "Montsame", "24tsag.mn", "Shuud.mn", "Eagle News", "MNB", "TV9 Mongolia"}
 
             for data in raw_articles:
                 try:
@@ -131,12 +132,12 @@ def batch_translate_articles():
         import time
         db = SessionLocal()
         try:
-            # Орчуулга байхгүй сүүлийн 20 англи мэдээг авах
+            # Орчуулга байхгүй англи мэдээг авах (50 хүртэл)
             articles = (
                 db.query(Article)
                 .filter(Article.lang == "en", Article.translated_content.is_(None))
                 .order_by(Article.id.desc())
-                .limit(20)
+                .limit(50)
                 .all()
             )
 
@@ -189,20 +190,46 @@ def batch_translate_articles():
         _fetch_lock.release()
 
 
-# Scheduler тохиргоо — 1 цаг тутам fetch + орчуулга
+# Scheduler тохиргоо
 scheduler = BackgroundScheduler()
 scheduler.add_job(auto_fetch_and_translate, "interval", hours=1, id="auto_fetch_translate",
                   max_instances=1, replace_existing=True)
 scheduler.add_job(batch_translate_articles, "interval", minutes=30, id="batch_translate",
                   max_instances=1, replace_existing=True)
 
+_startup_done = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _startup_done
     scheduler.start()
-    print("[Scheduler] Auto-fetch every 1 hour")
+    print("[Scheduler] Auto-fetch every 1 hour, batch translate every 30 min")
+
+    # Startup дээр шууд fetch эхлүүлэх (background thread-ээр)
+    if not _startup_done:
+        _startup_done = True
+        print("[Startup] Fetching articles on startup...")
+        Thread(target=_safe_startup_fetch, daemon=True).start()
+
     yield
     scheduler.shutdown()
+
+
+def _safe_startup_fetch():
+    """Startup дээр алдаа гарсан ч сервер унахгүйгээр fetch хийх."""
+    import time
+    time.sleep(5)  # DB бэлэн болтол хүлээх
+    try:
+        auto_fetch_and_translate()
+    except Exception as e:
+        print(f"[Startup] Fetch error (will retry on schedule): {e}")
+    # Орчуулаагүй мэдээг мөн шууд орчуулах
+    try:
+        time.sleep(10)
+        batch_translate_articles()
+    except Exception as e:
+        print(f"[Startup] Batch translate error: {e}")
 
 
 # Rate limiter
