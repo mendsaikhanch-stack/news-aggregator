@@ -1,14 +1,32 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: geregnews
+      POSTGRES_USER: geregnews
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geregnews_secret}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geregnews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     restart: unless-stopped
     env_file: .env
     environment:
-      - DATABASE_URL=sqlite:////data/news.db
-    volumes:
-      - db-data:/data
+      - DATABASE_URL=postgresql://geregnews:${POSTGRES_PASSWORD:-geregnews_secret}@db:5432/geregnews
     expose:
       - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 30s
@@ -40,4 +58,4 @@ services:
       - backend
 
 volumes:
-  db-data:
+  pg-data:
