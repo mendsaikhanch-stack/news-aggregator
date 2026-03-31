@@ -713,6 +713,23 @@ TRANSLATORS = [
 ]
 
 
+_POST_REPLACEMENTS = {
+    "С.Солонгос": "Өмнөд Солонгос", "С. Солонгос": "Өмнөд Солонгос",
+    "Н.Солонгос": "Хойд Солонгос", "Н. Солонгос": "Хойд Солонгос",
+    "БНСУ": "Өмнөд Солонгос", "БНАСАУ": "Хойд Солонгос",
+    "Хойд Корей": "Хойд Солонгос", "Өмнөд Корей": "Өмнөд Солонгос",
+    "Их Британид": "Их Британид", "Орос улс": "ОХУ",
+    "Хятад улс": "Хятад", "Америкийн Нэгдсэн Улс": "АНУ",
+}
+
+
+def _post_process(text: str) -> str:
+    """Орчуулгын нийтлэг алдааг засах."""
+    for old, new in _POST_REPLACEMENTS.items():
+        text = text.replace(old, new)
+    return text
+
+
 def translate_to_mongolian(text: str) -> str | None:
     """Fallback chain ашиглан текстийг монгол хэл рүү орчуулах."""
     if not text or not text.strip():
@@ -726,9 +743,9 @@ def translate_to_mongolian(text: str) -> str | None:
         try:
             result = translator_fn(clean)
             if result:
-                return result
+                return _post_process(result)
         except Exception as e:
-            logger.info(f"[{name}] орчуулга алдаа: {e}")
+            logger.info(f"[{name}] translate error: {e}")
             continue
 
     _translator_stats["failed"] += 1

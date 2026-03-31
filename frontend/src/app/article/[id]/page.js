@@ -180,13 +180,26 @@ export default async function ArticlePage({ params }) {
               ))}
             </div>
           ) : (
-            article.summary && (
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {article.summary}
-                </p>
+            <div>
+              {article.summary && (
+                <div className="prose dark:prose-invert max-w-none mb-6">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {article.summary}
+                  </p>
+                </div>
+              )}
+              <div className="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-6 text-center">
+                <p className="text-gray-500 dark:text-gray-400 mb-3">Бүтэн агуулга боловсруулагдаж байна</p>
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Эх сурвалжаас унших →
+                </a>
               </div>
-            )
+            </div>
           )}
 
           {/* Монголд үзүүлэх нөлөө */}
