@@ -200,37 +200,69 @@ def scrape_mongolian_site(site_config: dict) -> list[dict]:
 
 
 def fetch_youtube_videos() -> list[dict]:
-    """YouTube ТВ сувгуудаас сүүлийн бичлэгүүдийг татах."""
+    """YouTube ТВ сувгуудаас сүүлийн бичлэгүүдийг татах (HTML scrape fallback)."""
     articles = []
 
     for channel in YOUTUBE_CHANNELS:
         try:
-            # YouTube RSS feed ашиглах (API key шаардахгүй)
+            # RSS эхлээд оролдох
             feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel['channel_id']}"
             feed = feedparser.parse(feed_url)
 
-            for entry in feed.entries[:5]:
-                published = None
-                if hasattr(entry, "published_parsed") and entry.published_parsed:
-                    published = datetime(*entry.published_parsed[:6])
-
-                # YouTube thumbnail
-                video_id = entry.get("yt_videoid", "")
-                thumbnail = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg" if video_id else None
-
-                articles.append({
-                    "title": entry.get("title", ""),
-                    "url": entry.get("link", ""),
-                    "source": channel["source"],
-                    "summary": entry.get("summary", "")[:500],
-                    "image_url": thumbnail,
-                    "published_at": published,
-                    "is_video": True,
-                    "region": "mongolia",
+            if feed.entries:
+                for entry in feed.entries[:5]:
+                    published = None
+                    if hasattr(entry, "published_parsed") and entry.published_parsed:
+                        published = datetime(*entry.published_parsed[:6])
+                    video_id = entry.get("yt_videoid", "")
+                    thumbnail = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg" if video_id else None
+                    articles.append({
+                        "title": entry.get("title", ""),
+                        "url": entry.get("link", ""),
+                        "source": channel["source"],
+                        "summary": entry.get("summary", "")[:500],
+                        "image_url": thumbnail,
+                        "published_at": published,
+                        "is_video": True,
+                        "region": "mongolia",
+                    })
+            else:
+                # Fallback: YouTube channel page scrape
+                channel_url = f"https://www.youtube.com/channel/{channel['channel_id']}/videos"
+                resp = httpx.get(channel_url, timeout=15, follow_redirects=True, headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept-Language": "mn,en;q=0.9",
                 })
+                if resp.status_code == 200:
+                    import re
+                    # videoId-г HTML-ээс олох
+                    video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', resp.text)
+                    titles = re.findall(r'"title":\{"runs":\[\{"text":"([^"]+)"\}', resp.text)
+                    seen = set()
+                    for i, vid in enumerate(video_ids):
+                        if vid in seen or len(seen) >= 5:
+                            break
+                        seen.add(vid)
+                        title = titles[i] if i < len(titles) else f"{channel['source']} Video"
+                        articles.append({
+                            "title": title,
+                            "url": f"https://www.youtube.com/watch?v={vid}",
+                            "source": channel["source"],
+                            "summary": "",
+                            "image_url": f"https://img.youtube.com/vi/{vid}/hqdefault.jpg",
+                            "published_at": datetime.now(),
+                            "is_video": True,
+                            "region": "mongolia",
+                        })
+                    if seen:
+                        print(f"[YT] {channel['source']}: {len(seen)} videos (HTML scrape)")
+                    else:
+                        print(f"[YT] {channel['source']}: 0 videos (no videoId found)")
+                else:
+                    print(f"[YT] {channel['source']}: HTTP {resp.status_code}")
 
         except Exception as e:
-            print(f"YouTube алдаа ({channel['source']}): {e}")
+            print(f"[YT FAIL] {channel['source']}: {e}")
 
     return articles
 
